@@ -40,6 +40,8 @@ def main(page: ft.Page):
         page.update()
 
     # --- PANEL IZQUIERDO ---
+
+    
     panel_izquierdo = ft.Container(
         expand=4,
         width=480,
@@ -128,16 +130,30 @@ def main(page: ft.Page):
         alignment=ft.Alignment(-1, -1),
         content=ft.Column(
             controls=[
-                ft.Container(
-                    width=170,
-                    height=70,
-                    content=ft.Image(
-                        src="Dekache_LogoSF.ico",
-                        width=170,
-                        height=70,
-                        fit="contain"
-                    )
-                ),
+                ft.Row(
+    [
+        ft.Text(
+            spans=[
+                ft.TextSpan("Deka", style=ft.TextStyle(color="#FF6B00", weight="bold")),
+                ft.TextSpan("che", style=ft.TextStyle(color="#101010", weight="bold")),
+            ],
+            size=22
+        ),
+        ft.Container(
+            width=7,
+            height=7,
+            bgcolor="#FF6B00",
+            border_radius=50
+        ),
+        ft.Container(
+            width=7,
+            height=7,
+            bgcolor="#F7D32E",
+            border_radius=50
+        ),
+    ],
+    spacing=6
+),
                 ft.Container(height=30),
 
                 ft.Text(
@@ -162,7 +178,15 @@ def main(page: ft.Page):
                     bgcolor="white",
                     height=55,
                     width=500,
-                    content_padding=15
+                    content_padding=15,
+                    prefix_icon=ft.Container(
+                        content=ft.Image(
+                            src="Email.png",
+                            width=20,
+                            height=20
+                        ),
+                        padding=ft.padding.only(left=10)
+                    )
                 ),
 
                 ft.Container(height=20),
@@ -192,7 +216,15 @@ def main(page: ft.Page):
                     bgcolor="white",
                     height=55,
                     width=500,
-                    content_padding=15
+                    content_padding=15,
+                    prefix_icon=ft.Container(
+                        content=ft.Image(
+                            src="Password.png",
+                            width=20,
+                            height=20
+                        ),
+                        padding=ft.padding.only(left=10)
+                    )
                 ),
 
                 ft.Container(height=40),
@@ -201,9 +233,15 @@ def main(page: ft.Page):
 
                 ft.Container(height=30),
 
-                ft.Row(
-                    [ft.Text("ACCESO SEGURO SSL", size=10, color=c_gris_medio, weight="bold")],
-                    alignment=ft.MainAxisAlignment.CENTER
+                ft.Container(
+                    width=520,
+                    alignment=ft.Alignment(0, 0),
+                    content=ft.Text(
+                        "ACCESO SEGURO SSL",
+                        size=10,
+                        color=c_gris_medio,
+                        weight="bold"
+                    )
                 )
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START
@@ -217,8 +255,18 @@ def main(page: ft.Page):
             expand=True,
             spacing=40,
             alignment=ft.MainAxisAlignment.CENTER
+        ),
+        ft.Container(
+            height=40,
+            alignment=ft.Alignment(-1, 0),
+            content=ft.Text(
+                "©Dekache Sistemas de Gestión - 2026",
+                size=12,
+                color="#888888"
+            )
         )
     )
+    
 
 if __name__ == "__main__":
     ft.app(target=main, view=ft.AppView.WEB_BROWSER, assets_dir="assets")
