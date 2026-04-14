@@ -1,6 +1,5 @@
 import bcrypt
 
-
 def hash_password(password: str) -> str:
     """
     Encripta una contraseña usando bcrypt.
