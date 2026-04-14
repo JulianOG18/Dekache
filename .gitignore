@@ -1,0 +1,15 @@
+# Python environment
+.venv/
+
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Database configuration and secrets
+database.py
+
+# Editor and system files
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
