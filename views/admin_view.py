@@ -1,4 +1,5 @@
 import flet as ft
+from database import create_user
 
 def admin_view(page: ft.Page):
     # Configuración de la vista de Admin
@@ -26,7 +27,7 @@ def admin_view(page: ft.Page):
     def create_users_view():
         # Formulario de registro de usuarios
         nombre_input = ft.TextField(
-            label="Nombre Completo",
+            #label="Nombre Completo",
             color="#101010",
             hint_text="Ej. Juan Pérez",
             border_color=c_gris_medio,
@@ -37,7 +38,7 @@ def admin_view(page: ft.Page):
         )
 
         correo_input = ft.TextField(
-            label="Correo Electrónico",
+            #label="Correo Electrónico",
             color="#101010",
             hint_text="ejemplo@dekache.com",
             border_color=c_gris_medio,
@@ -48,7 +49,7 @@ def admin_view(page: ft.Page):
         )
 
         password_input = ft.TextField(
-            label="Contraseña",
+            #label="Contraseña",
             color="#101010",
             hint_text="••••••••",
             password=True,
@@ -61,22 +62,22 @@ def admin_view(page: ft.Page):
         )
 
         rol_dropdown = ft.Dropdown(
-            label="Asignar Rol",
-            color="#101010",
-            options=[
-                ft.dropdown.Option("Administrador"),
-                ft.dropdown.Option("Cajero"),
-                ft.dropdown.Option("Mesero"),
-                ft.dropdown.Option("Cocinero"),
-            ],
-            border_color=c_gris_medio,
-            focused_border_color=c_naranja,
-            width=420,
-            height=55
-        )
+    color="#101010",
+    options=[
+        # ft.dropdown.Option(key="VALOR_DB", text="LO_QUE_VE_EL_USUARIO")
+        ft.dropdown.Option(key="admin", text="Administrador"),
+        ft.dropdown.Option(key="cajero", text="Cajero"),
+        ft.dropdown.Option(key="armador", text="Armador"),
+        ft.dropdown.Option(key="cocinero", text="Cocinero"),
+    ],
+    border_color=c_gris_medio,
+    focused_border_color=c_naranja,
+    width=420,
+    height=55
+)
 
-#POR COMPLETAR: FUNCION DE REGISTRO DE USUARIOS.
         def register_user(e):
+            # 1. Validar que no haya campos vacíos
             if not nombre_input.value or not correo_input.value or not password_input.value or not rol_dropdown.value:
                 page.snack_bar = ft.SnackBar(
                     ft.Text("Por favor completa todos los campos", color="white"),
@@ -86,6 +87,35 @@ def admin_view(page: ft.Page):
                 page.update()
                 return
             
+            # (Opcional) Cambiar el texto del botón mientras carga
+            register_btn.content.controls[1].value = "REGISTRANDO..."
+            register_btn.disabled = True
+            page.update()
+
+            # 2. Llamar a la función de la base de datos
+            registro_exitoso = create_user(
+                nombre=nombre_input.value,
+                correo=correo_input.value,
+                contrasena=password_input.value,
+                rol=rol_dropdown.value
+            )
+
+            # 3. Mostrar el resultado al administrador
+            if registro_exitoso:
+                page.snack_bar = ft.SnackBar(
+                    ft.Text("Usuario registrado exitosamente", color="white"),
+                    bgcolor="green"
+                )
+                clear_form(e) # Limpiamos el formulario automáticamente
+            else:
+                page.snack_bar = ft.SnackBar(
+                    ft.Text("Error al registrar. Verifica que el correo no exista ya.", color="white"),
+                    bgcolor="#FF4444"
+                )
+            
+            # Restaurar el botón a su estado original
+            register_btn.content.controls[1].value = "REGISTRAR USUARIO"
+            register_btn.disabled = False
             page.snack_bar.open = True
             page.update()
 
