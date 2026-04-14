@@ -27,6 +27,7 @@ def admin_view(page: ft.Page):
         # Formulario de registro de usuarios
         nombre_input = ft.TextField(
             label="Nombre Completo",
+            color="#101010",
             hint_text="Ej. Juan Pérez",
             border_color=c_gris_medio,
             focused_border_color=c_naranja,
@@ -37,6 +38,7 @@ def admin_view(page: ft.Page):
 
         correo_input = ft.TextField(
             label="Correo Electrónico",
+            color="#101010",
             hint_text="ejemplo@dekache.com",
             border_color=c_gris_medio,
             focused_border_color=c_naranja,
@@ -47,6 +49,7 @@ def admin_view(page: ft.Page):
 
         password_input = ft.TextField(
             label="Contraseña",
+            color="#101010",
             hint_text="••••••••",
             password=True,
             can_reveal_password=True,
@@ -59,6 +62,7 @@ def admin_view(page: ft.Page):
 
         rol_dropdown = ft.Dropdown(
             label="Asignar Rol",
+            color="#101010",
             options=[
                 ft.dropdown.Option("Administrador"),
                 ft.dropdown.Option("Cajero"),

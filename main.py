@@ -196,6 +196,7 @@ def main(page: ft.Page):
                     ft.Text("CORREO", size=12, weight="bold", color=c_negro),
                     user_input := ft.TextField(
                         hint_text="ejemplo@dekache.com",
+                        color="#101010",
                         border_color="#E0E0E0",
                         focused_border_color=c_naranja,
                         bgcolor="white",
@@ -235,6 +236,7 @@ def main(page: ft.Page):
                         password=True,
                         can_reveal_password=True,
                         border_color="#E0E0E0",
+                        color="#101010",
                         focused_border_color=c_naranja,
                         bgcolor="white",
                         height=55,
