@@ -1,5 +1,13 @@
 import flet as ft
+import database as db
 from database import create_user
+from views.menu_view_admin import MenuViewAdmin
+
+# Obtener los datos reales de SQL Server
+datos_reales = db.get_products_with_recipes()
+
+# Pasar los datos a la vista
+viva_admin = MenuViewAdmin(products_data=datos_reales)
 
 def admin_view(page: ft.Page):
     # Configuración de la vista de Admin
@@ -300,18 +308,36 @@ def admin_view(page: ft.Page):
         )
 
     def create_menu_view():
-        return ft.Column(
-            controls=[
-                ft.Text(
-                    "MENÚ",
-                    size=28,
-                    weight="bold",
-                    color=c_negro
-                ),
-                ft.Container(height=20),
-            ],
-            alignment=ft.MainAxisAlignment.START
-        )
+        # TODO: Cargar estos datos reales desde la Base de Datos usando una función de database.py
+        mock_data = [
+            {
+                "id": 1,
+                "nombre": "Hamburguesa Doble",
+                "categoria": "Burgers",
+                "precio_venta": 12500,
+                "stock_actual": 45,
+                "imagen_ruta": "/assets/burger.png",
+                "receta": [
+                    {"insumo": "Carne de Res", "cantidad": "200g", "costo": 2500},
+                    {"insumo": "Pan Artesanal", "cantidad": "1 ud", "costo": 650},
+                    {"insumo": "Queso Cheddar", "cantidad": "2 fetas", "costo": 450},
+                    {"insumo": "Salsa de la Casa", "cantidad": "30ml", "costo": 400},
+                    {"insumo": "Lechuga", "cantidad": "15g", "costo": 200},
+                ]
+            },
+            {
+                "id": 2,
+                "nombre": "Papas Grandes",
+                "categoria": "Snacks",
+                "precio_venta": 4000,
+                "stock_actual": 12,
+                "receta": [
+                    {"insumo": "Papas", "cantidad": "200g", "costo": 700},
+                    {"insumo": "Aceite", "cantidad": "50ml", "costo": 150},
+                ]
+            }
+        ]
+        return MenuViewAdmin(products_data=mock_data)
 
     # ============== FUNCIONES DE NAVEGACIÓN ==============
     def show_view(view_name):
@@ -364,10 +390,9 @@ def admin_view(page: ft.Page):
                                 tooltip="Próximamente"
                             ),
                             ft.TextButton(
-                                "Inventory",
-                                style=ft.ButtonStyle(color=c_gris_medio),
-                                disabled=True,
-                                tooltip="Próximamente"
+                                "Menú",
+                                style=ft.ButtonStyle(color="white"),
+                                on_click=lambda e: show_view("menu")
                             ),
                         ]
                     ),
