@@ -10,7 +10,7 @@ except Exception as e:
     print(f"Error cargando datos: {e}")
     datos_reales = []
 
-def admin_view(page: ft.Page):
+def admin_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Panel de Administrador"
     page.bgcolor = "#F9F7F2"
 
@@ -21,11 +21,11 @@ def admin_view(page: ft.Page):
     c_gris_sidebar = "#F0F0F0"
     c_gris_medio = "#C0C0C0"
 
-    # ============== 1. ESTRUCTURA DE CONTENIDO ==============
+    # ============== ESTRUCTURA DE CONTENIDO ==============
     content_scroll_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=0)
     content_area = ft.Container(content=content_scroll_column, expand=True, alignment=ft.Alignment(-1, -1))
 
-    # ============== 2. VISTAS ==============
+    # ============== VISTAS INTERNAS ==============
     
     def create_users_view():
         nombre_input = ft.TextField(
@@ -151,7 +151,6 @@ def admin_view(page: ft.Page):
 
     def show_view(view_name):
         content_scroll_column.controls.clear()
-        
         if view_name == "kanban":
             target = ft.Column(
                 controls=[
@@ -162,8 +161,7 @@ def admin_view(page: ft.Page):
                     ft.Text("Tablero Kanban", size=32, weight="bold", color=c_negro),
                     ft.Text("Gestione y visualice el estado de los pedidos en tiempo real.", size=14, color="#666666"),
                 ],
-                spacing=10,
-                horizontal_alignment=ft.CrossAxisAlignment.START
+                spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START
             )
         elif view_name == "users":
             target = create_users_view()
@@ -175,6 +173,8 @@ def admin_view(page: ft.Page):
         )
         page.update()
 
+    # ============== COMPONENTES DE ESTRUCTURA ==============
+    
     def create_top_bar():
         return ft.Container(
             bgcolor=c_negro, height=70, padding=ft.padding.symmetric(horizontal=20),
@@ -185,6 +185,8 @@ def admin_view(page: ft.Page):
                     width=160, height=40, border_radius=8,
                     gradient=ft.LinearGradient(colors=[c_naranja, c_naranja_oscuro]),
                     alignment=ft.Alignment(0, 0),
+                    on_click=callback_logout, # <--- AQUÍ FUNCIONA EL CIERRE DE SESIÓN
+                    ink=True,
                     content=ft.Text("Cerrar Sesión", color="white", size=12, weight="bold"),
                 )
             ])
@@ -196,7 +198,6 @@ def admin_view(page: ft.Page):
             ("Users.png", "Users", "users"), 
             ("Menu.png", "Menu", "menu")
         ]
-
         buttons = []
         for icon, label, vid in items:
             buttons.append(
@@ -224,6 +225,7 @@ def admin_view(page: ft.Page):
             ], spacing=5)
         )
 
+    # Inicializar la vista
     show_view("kanban")
     page.controls.clear()
     page.add(
