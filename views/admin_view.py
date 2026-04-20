@@ -1,9 +1,9 @@
 import flet as ft
 import database as db
-from database import create_user
+from database import create_user, get_user_by_email
 from views.menu_view_admin import MenuViewAdmin
 
-# Obtener los datos reales de SQL Server
+# Intentar obtener datos iniciales de SQL Server
 try:
     datos_reales = db.get_products_with_recipes()
 except Exception as e:
@@ -21,29 +21,48 @@ def admin_view(page: ft.Page, callback_logout):
     c_gris_sidebar = "#F0F0F0"
     c_gris_medio = "#C0C0C0"
 
+    # ============== VENTANA EMERGENTE (ALERT DIALOG) ==============
+    def mostrar_mensaje(titulo, mensaje, color_titulo):
+        def cerrar_dialogo(e):
+            dialogo.open = False
+            page.update()
+
+        dialogo = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(titulo, color=color_titulo, weight="bold"),
+            content=ft.Text(mensaje),
+            actions=[
+                ft.ElevatedButton("Aceptar", on_click=cerrar_dialogo, bgcolor=c_naranja, color="white")
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        
+        page.overlay.append(dialogo)
+        dialogo.open = True
+        page.update()
+
     # ============== ESTRUCTURA DE CONTENIDO ==============
     content_scroll_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=0)
     content_area = ft.Container(content=content_scroll_column, expand=True, alignment=ft.Alignment(-1, -1))
 
-    # ============== VISTAS INTERNAS ==============
-    
+    # ============== VISTA DE USUARIOS ==============
     def create_users_view():
         nombre_input = ft.TextField(
-            hint_text="Ej. Juan Pérez", border_color=c_gris_medio, color=c_negro,
-            focused_border_color=c_naranja, width=420, height=50, content_padding=15
+            label="Nombre Completo", hint_text="Ej. Juan Pérez", border_color=c_gris_medio, color=c_negro,
+            focused_border_color=c_naranja, width=420, height=60, content_padding=15
         )
         correo_input = ft.TextField(
-            hint_text="jerez@dekache.com", border_color=c_gris_medio, color=c_negro,
-            focused_border_color=c_naranja, width=420, height=50, content_padding=15
+            label="Correo Electrónico", hint_text="jerez@dekache.com", border_color=c_gris_medio, color=c_negro,
+            focused_border_color=c_naranja, width=420, height=60, content_padding=15
         )
         password_input = ft.TextField(
-            hint_text="••••••••••••", password=True, can_reveal_password=True, color=c_negro,
-            border_color=c_gris_medio, focused_border_color=c_naranja, width=420, height=50, content_padding=15
+            label="Contraseña", hint_text="••••••••••••", password=True, can_reveal_password=True, color=c_negro,
+            border_color=c_gris_medio, focused_border_color=c_naranja, width=420, height=60, content_padding=15
         )
         
         rol_dropdown = ft.Dropdown(
-            border_color=c_gris_medio, focused_border_color=c_naranja, color=c_negro,
-            width=860, height=50, hint_text="Seleccione un rol...",
+            label="Asignar Rol", border_color=c_gris_medio, focused_border_color=c_naranja, color=c_negro,
+            width=860, height=60, hint_text="Seleccione un rol...",
             options=[
                 ft.dropdown.Option(key="admin", text="Administrador"),
                 ft.dropdown.Option(key="cajero", text="Cajero"),
@@ -52,7 +71,7 @@ def admin_view(page: ft.Page, callback_logout):
             ],
         )
 
-        def limpiar_campos(e):
+        def limpiar_campos(e=None):
             nombre_input.value = ""
             correo_input.value = ""
             password_input.value = ""
@@ -60,20 +79,43 @@ def admin_view(page: ft.Page, callback_logout):
             page.update()
 
         def register_user(e):
-            if not all([nombre_input.value, correo_input.value, password_input.value, rol_dropdown.value]):
-                page.snack_bar = ft.SnackBar(ft.Text("Completa todos los campos"), bgcolor="#FF4444")
-                page.snack_bar.open = True
-                page.update()
+            # 1. Validación de campos vacíos
+            if not nombre_input.value or not correo_input.value or not password_input.value or not rol_dropdown.value:
+                mostrar_mensaje("Atención", "Todos los campos deben rellenarse", "#FF4444")
                 return
             
-            exito = create_user(nombre_input.value, correo_input.value, password_input.value, rol_dropdown.value)
-            if exito:
-                page.snack_bar = ft.SnackBar(ft.Text("Usuario registrado"), bgcolor="green")
-                limpiar_campos(None)
-            else:
-                page.snack_bar = ft.SnackBar(ft.Text("Error al registrar"), bgcolor="#FF4444")
-            page.snack_bar.open = True
-            page.update()
+            email_a_validar = correo_input.value.strip()
+
+            # 2. VALIDACIÓN DE DUPLICADOS (Identificador Único)
+            # Buscamos en la base de datos si el correo ya existe antes de intentar crearlo
+            try:
+                usuario_existente = db.get_user_by_email(email_a_validar)
+                
+                if usuario_existente:
+                    mostrar_mensaje("Error de Registro", f"El correo '{email_a_validar}' ya está registrado. No se permiten duplicados.", "#FF4444")
+                    return
+
+                # 3. Si no existe, procedemos al registro
+                exito = db.create_user(
+                    nombre_input.value.strip(), 
+                    email_a_validar, 
+                    password_input.value.strip(), 
+                    rol_dropdown.value
+                )
+                
+                if exito:
+                    mostrar_mensaje("Éxito", "Usuario Creado Exitosamente", "green")
+                    limpiar_campos()
+                else:
+                    mostrar_mensaje("Error", "No se pudo completar el registro en la base de datos", "#FF4444")
+            
+            except Exception as ex:
+                error_msg = str(ex).lower()
+                # Doble seguridad por si la DB lanza la excepción de unicidad
+                if "unique" in error_msg or "duplicate" in error_msg:
+                    mostrar_mensaje("Error de Registro", "Ese correo ya está en uso", "#FF4444")
+                else:
+                    mostrar_mensaje("Error del Sistema", f"Ocurrió un error inesperado: {ex}", "#FF4444")
 
         def role_chip(icon_path, label):
             return ft.Container(
@@ -112,18 +154,15 @@ def admin_view(page: ft.Page, callback_logout):
                 ft.Container(
                     content=ft.Column([
                         ft.Row([
-                            ft.Column([ft.Text("NOMBRE COMPLETO", size=11, weight="bold", color=c_negro), nombre_input]),
-                            ft.Column([ft.Text("CORREO ELECTRÓNICO", size=11, weight="bold", color=c_negro), correo_input]),
+                            ft.Column([nombre_input]),
+                            ft.Column([correo_input]),
                         ], spacing=20),
                         ft.Container(height=10),
                         ft.Row([
-                            ft.Column([ft.Text("CONTRASEÑA", size=11, weight="bold", color=c_negro), password_input]),
+                            ft.Column([password_input]),
                         ], spacing=20),
                         ft.Container(height=10),
-                        ft.Column([
-                            ft.Text("ASIGNAR ROL", size=11, weight="bold", color=c_negro),
-                            rol_dropdown
-                        ]),
+                        ft.Column([rol_dropdown]),
                         ft.Container(height=5),
                         ft.Row([
                             role_chip("Administrador.png", "Administrador"),
@@ -146,6 +185,7 @@ def admin_view(page: ft.Page, callback_logout):
             tight=True, spacing=10
         )
 
+    # --- Lógica de Navegación Interior ---
     def create_menu_view():
         return MenuViewAdmin(products_data=datos_reales)
 
@@ -173,8 +213,7 @@ def admin_view(page: ft.Page, callback_logout):
         )
         page.update()
 
-    # ============== COMPONENTES DE ESTRUCTURA ==============
-    
+    # --- Estructura Principal ---
     def create_top_bar():
         return ft.Container(
             bgcolor=c_negro, height=70, padding=ft.padding.symmetric(horizontal=20),
@@ -185,7 +224,7 @@ def admin_view(page: ft.Page, callback_logout):
                     width=160, height=40, border_radius=8,
                     gradient=ft.LinearGradient(colors=[c_naranja, c_naranja_oscuro]),
                     alignment=ft.Alignment(0, 0),
-                    on_click=callback_logout, # <--- AQUÍ FUNCIONA EL CIERRE DE SESIÓN
+                    on_click=callback_logout,
                     ink=True,
                     content=ft.Text("Cerrar Sesión", color="white", size=12, weight="bold"),
                 )
@@ -195,7 +234,7 @@ def admin_view(page: ft.Page, callback_logout):
     def create_sidebar():
         items = [
             ("Home.png", "Tablero Kanban", "kanban"), 
-            ("Users.png", "Users", "users"), 
+            ("Users.png", "Crear Usuarios", "users"), 
             ("Menu.png", "Menu", "menu")
         ]
         buttons = []
@@ -225,7 +264,7 @@ def admin_view(page: ft.Page, callback_logout):
             ], spacing=5)
         )
 
-    # Inicializar la vista
+    # Iniciar la vista
     show_view("kanban")
     page.controls.clear()
     page.add(
