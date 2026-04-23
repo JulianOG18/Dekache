@@ -235,7 +235,7 @@ def admin_view(page: ft.Page, callback_logout):
         items = [
             ("Home.png", "Tablero Kanban", "kanban"), 
             ("Users.png", "Crear Usuarios", "users"), 
-            ("Menu.png", "Menu", "menu")
+            ("Menu.png", "Menú", "menu")
         ]
         buttons = []
         for icon, label, vid in items:

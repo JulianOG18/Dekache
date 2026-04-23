@@ -29,15 +29,43 @@ def main(page: ft.Page):
     def show_login_view(e=None):
         global login_attempts, is_locked
 
+        def show_error_dialog(message):
+            # 1. Se crea dlg primero
+            dlg = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("Atención", size=18, color=c_naranja_oscuro, weight="bold"),
+                content=ft.Text(message, size=14, color="white"),
+                actions_alignment=ft.MainAxisAlignment.END,
+            )
+
+            # 2. close_dialog se define después, captura dlg correctamente
+            def close_dialog(e):
+                dlg.open = False
+                if dlg in page.overlay:
+                    page.overlay.remove(dlg)
+                page.update()
+
+            # 3. Se asignan las acciones después de definir close_dialog
+            dlg.actions = [
+                ft.TextButton(
+                    content=ft.Text("Aceptar", weight="bold", color=c_naranja),
+                    on_click=close_dialog,
+                )
+            ]
+            page.overlay.append(dlg)
+            dlg.open = True
+            page.update()
+
         async def apply_delay():
             global login_attempts, is_locked
             is_locked = True
             btn_login.disabled = True
             btn_login.gradient = ft.LinearGradient(colors=["#777777", "#444444"])
+            page.update()
+            
+            show_error_dialog("Has superado el límite de intentos. Espera 30 segundos.")
             
             for i in range(30, 0, -1):
-                btn_login.content.value = f"REINTENTAR EN {i}s"
-                page.update()
                 await asyncio.sleep(1)
             
             is_locked = False
@@ -47,7 +75,6 @@ def main(page: ft.Page):
                 begin=ft.Alignment(-1, 0), end=ft.Alignment(1, 0),
                 colors=[c_naranja, c_naranja_oscuro]
             )
-            btn_login.content.value = "INICIAR SESIÓN"
             page.update()
 
         def login_click(e):
@@ -59,22 +86,18 @@ def main(page: ft.Page):
             
             # 1. Validación de campos vacíos (Historia de Usuario)
             if not username or not password:
-                btn_login.content.value = "Por favor, complete todos los campos"
-                page.update()
+                show_error_dialog("Por favor, complete todos los campos.")
                 return
 
             # 2. Validación de formato de correo (@ obligatorio)
             if "@" not in username:
-                btn_login.content.value = "Formato de correo incorrecto"
-                page.update()
+                show_error_dialog("Formato de correo incorrecto.")
                 return
 
             role = validate_user(username, password)
             
             if role:
                 login_attempts = 0
-                btn_login.content.value = "ACCEDIENDO..."
-                page.update()
                 
                 role_lower = role.lower()
                 if role_lower == "admin":
@@ -92,8 +115,7 @@ def main(page: ft.Page):
                 else:
                     # 3. Contador de intentos descriptivo
                     intentos_restantes = 3 - login_attempts
-                    btn_login.content.value = f"ERROR: TE QUEDAN {intentos_restantes} INTENTOS"
-                    page.update()
+                    show_error_dialog(f"Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
 
         def hover_btn(e):
             if is_locked: return
@@ -112,6 +134,7 @@ def main(page: ft.Page):
                     ft.Container(
                         border_radius=ft.border_radius.only(top_right=20, bottom_right=20),
                         clip_behavior=ft.ClipBehavior.HARD_EDGE, expand=True,
+                        margin=ft.margin.only(left=5),
                         content=ft.Image(src="Hamburguesa_Doble.png", fit="cover"),
                     ),
                     ft.Container(
