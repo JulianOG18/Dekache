@@ -59,6 +59,11 @@ def admin_view(page: ft.Page, callback_logout):
             label="Contraseña", hint_text="••••••••••••", password=True, can_reveal_password=True, color=c_negro,
             border_color=c_gris_medio, focused_border_color=c_naranja, width=420, height=60, content_padding=15
         )
+        telefono_input = ft.TextField(
+            label="Teléfono", hint_text="Ej. 3001234567", border_color=c_gris_medio, color=c_negro,
+            focused_border_color=c_naranja, width=420, height=60, content_padding=15,
+            keyboard_type=ft.KeyboardType.PHONE
+        )
         
         rol_dropdown = ft.Dropdown(
             label="Asignar Rol", border_color=c_gris_medio, focused_border_color=c_naranja, color=c_negro,
@@ -75,13 +80,23 @@ def admin_view(page: ft.Page, callback_logout):
             nombre_input.value = ""
             correo_input.value = ""
             password_input.value = ""
+            telefono_input.value = ""
             rol_dropdown.value = None
             page.update()
 
         def register_user(e):
             # 1. Validación de campos vacíos
-            if not nombre_input.value or not correo_input.value or not password_input.value or not rol_dropdown.value:
+            if not nombre_input.value or not correo_input.value or not password_input.value or not telefono_input.value or not rol_dropdown.value:
                 mostrar_mensaje("Atención", "Todos los campos deben rellenarse", "#FF4444")
+                return
+            
+            # Validación de teléfono (solo números y longitud max)
+            telefono_val = telefono_input.value.strip()
+            if not telefono_val.isdigit():
+                mostrar_mensaje("Atención", "El teléfono solo debe contener números", "#FF4444")
+                return
+            if len(telefono_val) > 10:
+                mostrar_mensaje("Atención", "El teléfono no puede superar los 10 dígitos", "#FF4444")
                 return
             
             email_a_validar = correo_input.value.strip()
@@ -100,7 +115,8 @@ def admin_view(page: ft.Page, callback_logout):
                     nombre_input.value.strip(), 
                     email_a_validar, 
                     password_input.value.strip(), 
-                    rol_dropdown.value
+                    rol_dropdown.value,
+                    telefono_val
                 )
                 
                 if exito:
@@ -117,14 +133,27 @@ def admin_view(page: ft.Page, callback_logout):
                 else:
                     mostrar_mensaje("Error del Sistema", f"Ocurrió un error inesperado: {ex}", "#FF4444")
 
-        def role_chip(icon_path, label):
+        def select_role(role_key):
+            rol_dropdown.value = role_key
+            page.update()
+
+        def role_chip(icon_path, label, role_key):
             return ft.Container(
                 content=ft.Row([
                     ft.Image(src=icon_path, width=16, height=16),
                     ft.Text(label, size=12, color=c_negro)
                 ], spacing=8),
-                bgcolor="#E0E0E0", padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=10
+                bgcolor="#E0E0E0", padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=10,
+                ink=True,
+                on_click=lambda _: select_role(role_key)
             )
+
+        def hover_registrar(e):
+            if e.data == "true":
+                btn_registrar.shadow = ft.BoxShadow(blur_radius=25, color="#A0410060", offset=ft.Offset(0, 8))
+            else:
+                btn_registrar.shadow = ft.BoxShadow(blur_radius=15, color="#A0410040", offset=ft.Offset(0, 6))
+            page.update()
 
         btn_registrar = ft.Container(
             width=240, height=50, border_radius=10,
@@ -132,13 +161,14 @@ def admin_view(page: ft.Page, callback_logout):
                 begin=ft.Alignment(-1, 0), end=ft.Alignment(1, 0),
                 colors=[c_naranja, c_naranja_oscuro]
             ),
-            shadow=ft.BoxShadow(blur_radius=15, color="#FF6B0050", offset=ft.Offset(0, 6)),
+            shadow=ft.BoxShadow(blur_radius=15, color="#A0410040", offset=ft.Offset(0, 6)),
             alignment=ft.Alignment(0, 0),
             content=ft.Row([
                 ft.Image(src="Registrar_User.png", width=18, height=18),
                 ft.Text("REGISTRAR USUARIO", color="white", size=13, weight="bold")
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=10),
             on_click=register_user,
+            on_hover=hover_registrar,
             ink=True
         )
 
@@ -159,16 +189,20 @@ def admin_view(page: ft.Page, callback_logout):
                         ], spacing=20),
                         ft.Container(height=10),
                         ft.Row([
+                            ft.Column([telefono_input]),
+                        ], spacing=20),
+                        ft.Container(height=10),
+                        ft.Row([
                             ft.Column([password_input]),
                         ], spacing=20),
                         ft.Container(height=10),
                         ft.Column([rol_dropdown]),
                         ft.Container(height=5),
                         ft.Row([
-                            role_chip("Administrador.png", "Administrador"),
-                            role_chip("Cajero.png", "Cajero"),
-                            role_chip("Armador.png", "Armador"),
-                            role_chip("Cocinero.png", "Cocinero"),
+                            role_chip("Administrador.png", "Administrador", "admin"),
+                            role_chip("Cajero.png", "Cajero", "cajero"),
+                            role_chip("Armador.png", "Armador", "armador"),
+                            role_chip("Cocinero.png", "Cocinero", "cocinero"),
                         ], spacing=10),
                         ft.Container(height=25),
                         ft.Row([
