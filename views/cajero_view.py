@@ -1,4 +1,7 @@
 import flet as ft
+from views.pedidos_view import PedidosView
+from views.kanban_view import KanbanView
+from views.editar_pedido_view import EditarPedidoView
 
 def cajero_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Terminal de Ventas"
@@ -15,22 +18,11 @@ def cajero_view(page: ft.Page, callback_logout):
     def show_view(view_name):
         content_scroll_column.controls.clear()
         if view_name == "kanban":
-            target = ft.Column(
-                controls=[
-                    ft.Row([
-                        ft.Image(src="Kanban.png", width=22, height=22),
-                        ft.Text("FLUJO DE COCINA", size=11, weight="bold", color="#B15E1D") 
-                    ], spacing=10),
-                    ft.Text("Tablero Kanban", size=32, weight="bold", color=c_negro),
-                    ft.Text("Gestione y visualice el estado de los pedidos en tiempo real.", size=14, color="#666666"),
-                ],
-                spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START
-            )
-        elif view_name == "menu":
-            target = ft.Column([
-                ft.Text("PRODUCTOS DISPONIBLES", size=11, weight="bold", color="#B15E1D"),
-                ft.Text("Menú de Ventas", size=32, weight="bold", color=c_negro),
-            ], spacing=5)
+            target = KanbanView(page)
+        elif view_name == "pedidos":
+            target = PedidosView(page)
+        elif view_name == "editar":
+            target = EditarPedidoView(page)
 
         content_scroll_column.controls.append(
             ft.Container(padding=40, content=target, alignment=ft.Alignment(-1, -1), expand=True)
@@ -57,7 +49,8 @@ def cajero_view(page: ft.Page, callback_logout):
     def create_sidebar():
         items = [
             ("Home.png", "Tablero Kanban", "kanban"), 
-            ("Menu.png", "Menu", "menu")
+            ("Orders.png", "Pedidos", "pedidos"),
+            ("Edit.png", "Editar Pedido", "editar")
         ]
         
         buttons = [
@@ -84,27 +77,10 @@ def cajero_view(page: ft.Page, callback_logout):
             ], spacing=5)
         )
 
-    page.controls.clear()
-    page.add(
-        ft.Column(
-            expand=True, 
-            spacing=0, 
-            controls=[
-                create_top_bar(),
-                ft.Row(
-                    expand=True, 
-                    spacing=0, 
-                    controls=[
-                        create_sidebar(), 
-                        content_scroll_column
-                    ]
-                )
-            ]
-        )
-    )
+    # Eliminar este bloque duplicado, ya se inicializa abajo
     
     # Inicializar la vista
-    show_view("kanban")
+    show_view("pedidos")
     page.controls.clear()
     page.add(
         ft.Column(expand=True, spacing=0, controls=[

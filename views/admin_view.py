@@ -2,6 +2,8 @@ import flet as ft
 import database as db
 from database import create_user, get_user_by_email
 from views.menu_view_admin import MenuViewAdmin
+from views.kanban_view import KanbanView
+from views.editar_pedido_view import EditarPedidoView
 
 # Intentar obtener datos iniciales de SQL Server
 try:
@@ -226,21 +228,13 @@ def admin_view(page: ft.Page, callback_logout):
     def show_view(view_name):
         content_scroll_column.controls.clear()
         if view_name == "kanban":
-            target = ft.Column(
-                controls=[
-                    ft.Row([
-                        ft.Image(src="Kanban.png", width=22, height=22),
-                        ft.Text("FLUJO DE COCINA", size=11, weight="bold", color="#B15E1D")
-                    ], spacing=10),
-                    ft.Text("Tablero Kanban", size=32, weight="bold", color=c_negro),
-                    ft.Text("Gestione y visualice el estado de los pedidos en tiempo real.", size=14, color="#666666"),
-                ],
-                spacing=10, horizontal_alignment=ft.CrossAxisAlignment.START
-            )
+            target = KanbanView(page)
         elif view_name == "users":
             target = create_users_view()
         elif view_name == "menu":
             target = create_menu_view()
+        elif view_name == "editar":
+            target = EditarPedidoView(page)
         
         content_scroll_column.controls.append(
             ft.Container(padding=40, content=target, alignment=ft.Alignment(-1, -1), expand=True)
@@ -268,6 +262,7 @@ def admin_view(page: ft.Page, callback_logout):
     def create_sidebar():
         items = [
             ("Home.png", "Tablero Kanban", "kanban"), 
+            ("Edit.png", "Editar Pedidos", "editar"),
             ("Users.png", "Crear Usuarios", "users"), 
             ("Menu.png", "Menú", "menu")
         ]

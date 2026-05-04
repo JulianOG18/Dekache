@@ -1,4 +1,5 @@
 import flet as ft
+from views.kanban_view import KanbanView
 
 def armador_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Centro de Armado"
@@ -15,17 +16,7 @@ def armador_view(page: ft.Page, callback_logout):
     def show_view(view_name):
         content_scroll_column.controls.clear()
         if view_name == "kanban":
-            target = ft.Column(
-                controls=[
-                    ft.Row([
-                        ft.Image(src="Kanban.png", width=22, height=22),
-                        ft.Text("FLUJO DE DESPACHO", size=11, weight="bold", color="#B15E1D") 
-                    ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                    ft.Text("Tablero Kanban", size=32, weight="bold", color=c_negro),
-                    ft.Text("Organice y verifique los pedidos para su entrega final.", size=14, color="#666666"),
-                ],
-                spacing=5, horizontal_alignment=ft.CrossAxisAlignment.START
-            )
+            target = KanbanView(page)
         
         content_scroll_column.controls.append(
             ft.Container(padding=40, content=target, alignment=ft.Alignment(-1, -1), expand=True)
