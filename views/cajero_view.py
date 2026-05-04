@@ -39,7 +39,7 @@ def cajero_view(page: ft.Page, callback_logout):
 
     def create_top_bar():
         return ft.Container(
-            bgcolor=c_negro, height=70, padding=ft.padding.symmetric(horizontal=20),
+            bgcolor=c_negro, height=70, padding=ft.Padding.symmetric(horizontal=20),
             content=ft.Row([
                 ft.Text("Dekache", size=24, weight="bold", color="white"),
                 ft.Container(expand=True),
@@ -62,7 +62,7 @@ def cajero_view(page: ft.Page, callback_logout):
         
         buttons = [
             ft.Container(
-                padding=ft.padding.symmetric(vertical=12, horizontal=20),
+                padding=ft.Padding.symmetric(vertical=12, horizontal=20),
                 ink=True,
                 on_click=lambda e, v=vid: show_view(v),
                 content=ft.Row([
@@ -78,7 +78,7 @@ def cajero_view(page: ft.Page, callback_logout):
                 ft.Container(height=20),
                 ft.Container(
                     content=ft.Text("VENTAS", size=11, weight="bold", color="#777777"), 
-                    padding=ft.padding.only(left=20, bottom=10)
+                    padding=ft.Padding.only(left=20, bottom=10)
                 ),
                 *buttons
             ], spacing=5)

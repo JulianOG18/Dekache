@@ -49,7 +49,7 @@ def main(page: ft.Page):
             shape=ft.RoundedRectangleBorder(radius=20),
             content=ft.Container(
                 width=380,
-                padding=ft.padding.all(10),
+                padding=ft.Padding.all(10),
                 content=ft.Column([
                     # ── Cabecera: barra de acento + título ──
                     ft.Row([
@@ -334,16 +334,16 @@ def main(page: ft.Page):
                 expand=True,
                 controls=[
                     ft.Container(
-                        border_radius=ft.border_radius.all(15),
+                        border_radius=ft.BorderRadius.all(15),
                         clip_behavior=ft.ClipBehavior.HARD_EDGE, expand=True,
                         #margin=ft.margin.only(left=10, top=10, bottom=10),
                         content=ft.Image(src="Hamburguesa_Login.png", fit="cover"),
                     ),
                     ft.Container(
                         expand=True, 
-                        padding=ft.padding.only(left=40, bottom=40, right=20, top=20),
-                        margin=ft.margin.only(left=10, top=10, bottom=10),
-                        border_radius=ft.border_radius.all(15),
+                        padding=ft.Padding.only(left=40, bottom=40, right=20, top=20),
+                        margin=ft.Margin.only(left=10, top=10, bottom=10),
+                        border_radius=ft.BorderRadius.all(15),
                         alignment=ft.Alignment(-1, 1),
                         gradient=ft.LinearGradient(
                             begin=ft.Alignment(0, -1), end=ft.Alignment(0, 1),
@@ -353,7 +353,7 @@ def main(page: ft.Page):
                             controls=[
                                 ft.Text("Industrial Speed.", size=40, weight="bold", color="white"),
                                 ft.Text("Artisanal Detail.", size=40, weight="bold", color="white"),
-                                ft.Container(bgcolor=c_naranja, height=5, width=100, margin=ft.margin.only(top=10, bottom=20)),
+                                ft.Container(bgcolor=c_naranja, height=5, width=100, margin=ft.Margin.only(top=10, bottom=20)),
                                 ft.Text("SISTEMA DE GESTIÓN DE ALIMENTOS", size=12, color="white70", weight="w500")
                             ],
                             spacing=0, alignment=ft.MainAxisAlignment.END
@@ -379,7 +379,7 @@ def main(page: ft.Page):
 
         # --- PANEL DERECHO ---
         panel_derecho = ft.Container(
-            expand=5, width=560, padding=ft.padding.symmetric(horizontal=50, vertical=50),
+            expand=5, width=560, padding=ft.Padding.symmetric(horizontal=50, vertical=50),
             bgcolor=c_blanco_hueso, alignment=ft.Alignment(-1, -1),
             content=ft.Column(
                 controls=[
@@ -401,7 +401,7 @@ def main(page: ft.Page):
                         focused_border_color=c_naranja, bgcolor="white", height=55, width=500,
                         content_padding=15, prefix_icon=ft.Container(
                             content=ft.Image(src="Email.png", width=20, height=20),
-                            padding=ft.padding.only(left=10)
+                            padding=ft.Padding.only(left=10)
                         )
                     ),
                     ft.Container(height=20),
@@ -419,7 +419,7 @@ def main(page: ft.Page):
                         bgcolor="white", height=55, width=500, content_padding=15,
                         prefix_icon=ft.Container(
                             content=ft.Image(src="Password.png", width=20, height=20),
-                            padding=ft.padding.only(left=10)
+                            padding=ft.Padding.only(left=10)
                         )
                     ),
                     ft.Container(height=40),
@@ -439,7 +439,7 @@ def main(page: ft.Page):
         page.add(
             ft.Row([panel_izquierdo, panel_derecho], expand=True, spacing=0, alignment=ft.MainAxisAlignment.CENTER),
             ft.Container(
-                height=40, padding=ft.padding.only(left=20), alignment=ft.Alignment(-1, 0),
+                height=40, padding=ft.Padding.only(left=20), alignment=ft.Alignment(-1, 0),
                 content=ft.Text("©Dekache Sistemas de Gestión - 2026", size=12, color="#888888")
             )
         )
@@ -449,9 +449,4 @@ def main(page: ft.Page):
     page.go_to_login = show_login_view
 
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets")
-
-def main(page: ft.page):
-    pass
-
-ft.app(target = main)
+    ft.run(main, assets_dir="assets")

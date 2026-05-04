@@ -143,7 +143,7 @@ def admin_view(page: ft.Page, callback_logout):
                     ft.Image(src=icon_path, width=16, height=16),
                     ft.Text(label, size=12, color=c_negro)
                 ], spacing=8),
-                bgcolor="#E0E0E0", padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=10,
+                bgcolor="#E0E0E0", padding=ft.Padding.symmetric(horizontal=12, vertical=8), border_radius=10,
                 ink=True,
                 on_click=lambda _: select_role(role_key)
             )
@@ -206,14 +206,14 @@ def admin_view(page: ft.Page, callback_logout):
                         ], spacing=10),
                         ft.Container(height=25),
                         ft.Row([
-                            ft.ElevatedButton(
+                            ft.Button(
                                 "Limpiar", bgcolor="#F0F0F0", color=c_negro,
                                 width=120, height=50, on_click=limpiar_campos,
                             ),
                             btn_registrar,
                         ], alignment=ft.MainAxisAlignment.END, spacing=15)
                     ], spacing=10),
-                    bgcolor="white", padding=30, border_radius=15, border=ft.border.all(1, "#EEEEEE")
+                    bgcolor="white", padding=30, border_radius=15, border=ft.Border.all(1, "#EEEEEE")
                 )
             ],
             tight=True, spacing=10
@@ -250,7 +250,7 @@ def admin_view(page: ft.Page, callback_logout):
     # --- Estructura Principal ---
     def create_top_bar():
         return ft.Container(
-            bgcolor=c_negro, height=70, padding=ft.padding.symmetric(horizontal=20),
+            bgcolor=c_negro, height=70, padding=ft.Padding.symmetric(horizontal=20),
             content=ft.Row([
                 ft.Text("Dekache", size=24, weight="bold", color="white"),
                 ft.Container(expand=True),
@@ -275,7 +275,7 @@ def admin_view(page: ft.Page, callback_logout):
         for icon, label, vid in items:
             buttons.append(
                 ft.Container(
-                    padding=ft.padding.symmetric(vertical=12, horizontal=20),
+                    padding=ft.Padding.symmetric(vertical=12, horizontal=20),
                     on_click=lambda e, v=vid: show_view(v),
                     ink=True,
                     content=ft.Row([
@@ -292,7 +292,7 @@ def admin_view(page: ft.Page, callback_logout):
                 ft.Container(height=20),
                 ft.Container(
                     content=ft.Text("SYSTEM CONTROL", size=11, weight="bold", color="#777777"),
-                    padding=ft.padding.only(left=20, bottom=10)
+                    padding=ft.Padding.only(left=20, bottom=10)
                 ),
                 *buttons
             ], spacing=5)
