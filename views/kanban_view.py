@@ -1,6 +1,6 @@
 import flet as ft
 from datetime import datetime
-from database import get_active_orders, update_order_status
+from database import get_active_orders, update_order_status, get_avg_completion_time
 
 # Paleta de colores
 CLR_NARANJA     = "#FF6B00"
@@ -26,7 +26,7 @@ class KanbanView(ft.Container):
         self.main_page = page
         self.expand = True
         self.bgcolor = CLR_BLANCO_HUESO
-        self.padding = ft.Padding.all(30)
+        self.padding = ft.Padding.symmetric(horizontal=15, vertical=20)
         
         self.pedidos = []
         
@@ -47,6 +47,11 @@ class KanbanView(ft.Container):
         
         # Paneles inferiores
         self.txt_pedidos_activos = ft.Text("0", size=36, weight="bold", color=CLR_TEXTO)
+        self.txt_tiempo_min = ft.Text("--", size=36, weight="bold", color=CLR_TEXTO)
+        self.txt_tiempo_min_label = ft.Text("m ", size=20, weight="bold", color=CLR_TEXTO)
+        self.txt_tiempo_seg = ft.Text("--", size=36, weight="bold", color=CLR_TEXTO_SEC)
+        self.txt_tiempo_seg_label = ft.Text("s", size=20, weight="bold", color=CLR_TEXTO_SEC)
+        self.txt_tiempo_nota = ft.Text("Sin datos aún", size=11, color="#43A047")
         
         self.construir_ui()
         self.cargar_datos()
@@ -137,7 +142,7 @@ class KanbanView(ft.Container):
                     ft.Text(tiempo_str if estado != ESTADO_ENTREGADO else "Entregado", size=11, color=CLR_NARANJA if estado == ESTADO_EN_PROCESO else CLR_TEXTO_SEC, weight="bold")
                 ], alignment="spaceBetween"),
                 
-                ft.Text(f"Cliente/Mesa: {pedido['identificador_cliente']}", size=12, color=CLR_NARANJA),
+                ft.Text(f"Cliente: {pedido['identificador_cliente']}", size=12, color=CLR_NARANJA),
                 
                 ft.Container(height=5),
                 ft.Column(detalles_ui, spacing=2),
@@ -185,14 +190,32 @@ class KanbanView(ft.Container):
         
         self.txt_pedidos_activos.value = str(count_por_hacer + count_en_proceso + count_finalizado)
         
+        # Calcular tiempo promedio real
+        self.actualizar_tiempo_promedio()
+        
         try:
             self.main_page.update()
         except:
             pass
 
+    def actualizar_tiempo_promedio(self):
+        avg_seconds = get_avg_completion_time()
+        if avg_seconds is not None:
+            avg_seconds = int(avg_seconds)
+            minutos = avg_seconds // 60
+            segundos = avg_seconds % 60
+            self.txt_tiempo_min.value = str(minutos)
+            self.txt_tiempo_seg.value = str(segundos).zfill(2)
+            self.txt_tiempo_nota.value = "~ Promedio de hoy"
+        else:
+            self.txt_tiempo_min.value = "--"
+            self.txt_tiempo_seg.value = "--"
+            self.txt_tiempo_nota.value = "Sin datos aún"
+
     def crear_columna(self, titulo, badge, contenido, estado_objetivo):
         columna_ui = ft.Container(
-            expand=True,
+            width=340,
+            height=500,
             bgcolor="#F5F5F5",
             border_radius=10,
             padding=15,
@@ -208,7 +231,7 @@ class KanbanView(ft.Container):
                 ], alignment="spaceBetween"),
                 ft.Container(height=10),
                 contenido
-            ])
+            ], expand=True)
         )
         
         return ft.DragTarget(
@@ -225,15 +248,6 @@ class KanbanView(ft.Container):
                 ft.Text("OPERACIONES", size=11, weight="bold", color=CLR_NARANJA),
                 ft.Text("Gestión de Cocina y Despacho", size=32, weight="bold", color=CLR_TEXTO)
             ], spacing=2, expand=True),
-            ft.Button(
-                "FILTRAR",
-                icon=ft.icons.FILTER_LIST if hasattr(ft.icons, "FILTER_LIST") else None,
-                color=CLR_TEXTO,
-                style=ft.ButtonStyle(
-                    shape=ft.RoundedRectangleBorder(radius=8),
-                    side=ft.BorderSide(1, CLR_BORDE)
-                )
-            )
         ], alignment="spaceBetween")
         
         # Kanban Board
@@ -242,7 +256,7 @@ class KanbanView(ft.Container):
             self.crear_columna("EN PROCESO", self.txt_count_en_proceso, self.col_en_proceso, ESTADO_EN_PROCESO),
             self.crear_columna("FINALIZADO", self.txt_count_finalizado, self.col_finalizado, ESTADO_FINALIZADO),
             self.crear_columna("ENTREGADO", self.txt_count_entregado, self.col_entregado, ESTADO_ENTREGADO),
-        ], expand=True, spacing=20, alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.START)
+        ], expand=True, spacing=15, scroll=ft.ScrollMode.AUTO, vertical_alignment=ft.CrossAxisAlignment.START)
         
         # Bottom Panels
         panel_inferior = ft.Row([
@@ -253,12 +267,12 @@ class KanbanView(ft.Container):
                 content=ft.Column([
                     ft.Text("TIEMPO PROMEDIO", size=11, weight="bold", color=CLR_TEXTO_SEC),
                     ft.Row([
-                        ft.Text("12", size=36, weight="bold", color=CLR_TEXTO),
-                        ft.Text("m ", size=20, weight="bold", color=CLR_TEXTO),
-                        ft.Text("30", size=36, weight="bold", color=CLR_TEXTO_SEC),
-                        ft.Text("s", size=20, weight="bold", color=CLR_TEXTO_SEC),
-                    ], spacing=0),
-                    ft.Text("~ Promedio de hoy", size=11, color="#43A047")
+                        self.txt_tiempo_min,
+                        self.txt_tiempo_min_label,
+                        self.txt_tiempo_seg,
+                        self.txt_tiempo_seg_label,
+                    ], spacing=0, alignment=ft.MainAxisAlignment.CENTER),
+                    self.txt_tiempo_nota
                 ], horizontal_alignment="center")
             ),
             # Pedidos Activos

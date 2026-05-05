@@ -25,7 +25,7 @@ def cajero_view(page: ft.Page, callback_logout):
             target = EditarPedidoView(page)
 
         content_scroll_column.controls.append(
-            ft.Container(padding=40, content=target, alignment=ft.Alignment(-1, -1), expand=True)
+            ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
         )
         page.update()
 
@@ -33,7 +33,14 @@ def cajero_view(page: ft.Page, callback_logout):
         return ft.Container(
             bgcolor=c_negro, height=70, padding=ft.Padding.symmetric(horizontal=20),
             content=ft.Row([
-                ft.Text("Dekache", size=24, weight="bold", color="white"),
+                ft.Row([
+                    ft.Text(spans=[
+                        ft.TextSpan("Deka", style=ft.TextStyle(color=c_naranja, weight="bold")),
+                        ft.TextSpan("che", style=ft.TextStyle(color="white", weight="bold")),
+                    ], size=22),
+                    ft.Container(width=7, height=7, bgcolor=c_naranja, border_radius=50),
+                    ft.Container(width=7, height=7, bgcolor="#F7D32E", border_radius=50),
+                ], spacing=6),
                 ft.Container(expand=True),
                 ft.Container(
                     width=160, height=40, border_radius=8,
@@ -48,9 +55,9 @@ def cajero_view(page: ft.Page, callback_logout):
 
     def create_sidebar():
         items = [
-            ("Home.png", "Tablero Kanban", "kanban"), 
-            ("Orders.png", "Pedidos", "pedidos"),
-            ("Edit.png", "Editar Pedido", "editar")
+            ("Home.png",    "Tablero Kanban", "kanban"), 
+            ("Pedidos.png", "Pedidos",         "pedidos"),
+            ("EditarPedido.png",  "Editar Pedido",   "editar")
         ]
         
         buttons = [
@@ -80,7 +87,7 @@ def cajero_view(page: ft.Page, callback_logout):
     # Eliminar este bloque duplicado, ya se inicializa abajo
     
     # Inicializar la vista
-    show_view("pedidos")
+    show_view("kanban")
     page.controls.clear()
     page.add(
         ft.Column(expand=True, spacing=0, controls=[

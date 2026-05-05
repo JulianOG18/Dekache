@@ -53,7 +53,7 @@ class PedidosView(ft.Container):
         self.txt_impuestos = ft.Text("$0", size=14, color=CLR_TEXTO_SEC, weight="w500")
         self.txt_total = ft.Text("$0", size=24, color=CLR_NARANJA, weight="bold")
         self.input_identificador = ft.TextField(
-            hint_text="Mesa o Nombre del Cliente", 
+            hint_text="Nombre del Cliente", 
             border_color=CLR_BORDE,
             focused_border_color=CLR_NARANJA,
             text_style=ft.TextStyle(color=CLR_TEXTO),
@@ -222,10 +222,10 @@ class PedidosView(ft.Container):
             self.filtrar_categoria(self.categoria_actual)
             return
             
-        self.productos_filtrados = [
-            p for p in self.productos 
+            self.productos_filtrados = [
+                p for p in self.productos 
             if query in p.get("nombre", "").lower() and (self.categoria_actual == "TODO" or p.get("categoria", "").lower() == self.categoria_actual.lower())
-        ]
+            ]
         self.actualizar_grid()
         self.main_page.update()
 
@@ -255,7 +255,7 @@ class PedidosView(ft.Container):
                     ft.Row([
                         ft.Text(format_cop(p.get("precio_venta", 0)), color=CLR_NARANJA, weight="bold", size=16),
                         ft.Container(
-                            content=ft.Icon(ft.icons.ADD if hasattr(ft.icons, "ADD") else None, color=CLR_BLANCO, size=18),
+                            content=ft.Text("+", color=CLR_BLANCO, size=20, weight="bold"),
                             bgcolor=CLR_NARANJA,
                             width=30, height=30,
                             border_radius=8,

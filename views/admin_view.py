@@ -4,6 +4,7 @@ from database import create_user, get_user_by_email
 from views.menu_view_admin import MenuViewAdmin
 from views.kanban_view import KanbanView
 from views.editar_pedido_view import EditarPedidoView
+from views.pedidos_view import PedidosView
 
 # Intentar obtener datos iniciales de SQL Server
 try:
@@ -229,6 +230,8 @@ def admin_view(page: ft.Page, callback_logout):
         content_scroll_column.controls.clear()
         if view_name == "kanban":
             target = KanbanView(page)
+        elif view_name == "pedidos":
+            target = PedidosView(page)
         elif view_name == "users":
             target = create_users_view()
         elif view_name == "menu":
@@ -237,7 +240,7 @@ def admin_view(page: ft.Page, callback_logout):
             target = EditarPedidoView(page)
         
         content_scroll_column.controls.append(
-            ft.Container(padding=40, content=target, alignment=ft.Alignment(-1, -1), expand=True)
+            ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
         )
         page.update()
 
@@ -246,7 +249,14 @@ def admin_view(page: ft.Page, callback_logout):
         return ft.Container(
             bgcolor=c_negro, height=70, padding=ft.Padding.symmetric(horizontal=20),
             content=ft.Row([
-                ft.Text("Dekache", size=24, weight="bold", color="white"),
+                ft.Row([
+                    ft.Text(spans=[
+                        ft.TextSpan("Deka", style=ft.TextStyle(color=c_naranja, weight="bold")),
+                        ft.TextSpan("che", style=ft.TextStyle(color="white", weight="bold")),
+                    ], size=22),
+                    ft.Container(width=7, height=7, bgcolor=c_naranja, border_radius=50),
+                    ft.Container(width=7, height=7, bgcolor="#F7D32E", border_radius=50),
+                ], spacing=6),
                 ft.Container(expand=True),
                 ft.Container(
                     width=160, height=40, border_radius=8,
@@ -261,10 +271,11 @@ def admin_view(page: ft.Page, callback_logout):
 
     def create_sidebar():
         items = [
-            ("Home.png", "Tablero Kanban", "kanban"), 
-            ("Edit.png", "Editar Pedidos", "editar"),
-            ("Users.png", "Crear Usuarios", "users"), 
-            ("Menu.png", "Menú", "menu")
+            ("Home.png",    "Tablero Kanban",  "kanban"), 
+            ("Pedidos.png", "Pedidos",          "pedidos"),
+            ("EditarPedido.png",  "Editar Pedidos",   "editar"),
+            ("Users.png",   "Crear Usuarios",   "users"), 
+            ("Menu.png",    "Menú",             "menu")
         ]
         buttons = []
         for icon, label, vid in items:
