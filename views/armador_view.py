@@ -36,14 +36,6 @@ def armador_view(page: ft.Page, callback_logout):
                     ft.Container(width=7, height=7, bgcolor="#F7D32E", border_radius=50),
                 ], spacing=6),
                 ft.Container(expand=True),
-                ft.Container(
-                    width=160, height=40, border_radius=8,
-                    gradient=ft.LinearGradient(colors=[c_naranja, c_naranja_oscuro]),
-                    alignment=ft.Alignment(0, 0),
-                    on_click=callback_logout,
-                    ink=True,
-                    content=ft.Text("Cerrar Sesión", color="white", size=12, weight="bold"),
-                )
             ])
         )
 
@@ -63,17 +55,54 @@ def armador_view(page: ft.Page, callback_logout):
                 ], spacing=15)
             ) for icon, label, vid in items
         ]
+
+        def logout_click(e):
+            def cerrar_modal(e):
+                confirm_dialog.open = False
+                page.update()
+
+            def ejecutar_logout(e):
+                confirm_dialog.open = False
+                page.update()
+                callback_logout(None)
+
+            confirm_dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("Confirmar Cierre de Sesión", weight="bold", color=c_naranja),
+                content=ft.Text("¿Realmente desea cerrar su sesión?"),
+                actions=[
+                    ft.TextButton("Cancelar", on_click=cerrar_modal),
+                    ft.ElevatedButton("Cerrar Sesión", bgcolor="#FF4444", color="white", on_click=ejecutar_logout),
+                ],
+                actions_alignment=ft.MainAxisAlignment.END,
+            )
+            page.overlay.append(confirm_dialog)
+            confirm_dialog.open = True
+            page.update()
         
         return ft.Container(
             bgcolor=c_gris_sidebar, width=240, 
             content=ft.Column([
-                ft.Container(height=20),
+                ft.Column([
+                    ft.Container(height=20),
+                    ft.Container(
+                        content=ft.Text("ARMADO", size=11, weight="bold", color="#777777"), 
+                        padding=ft.Padding.only(left=20, bottom=10)
+                    ),
+                    *buttons,
+                ], expand=True),
+                # Botón de Cerrar Sesión al fondo
                 ft.Container(
-                    content=ft.Text("ARMADO", size=11, weight="bold", color="#777777"), 
-                    padding=ft.Padding.only(left=20, bottom=10)
+                    padding=ft.Padding.symmetric(vertical=12, horizontal=20),
+                    on_click=logout_click,
+                    ink=True,
+                    content=ft.Row([
+                        ft.Image(src="CerrarSesion.png", width=22, height=22), 
+                        ft.Text("CERRAR SESIÓN", color="#656464", weight="bold", size=14)
+                    ], spacing=15)
                 ),
-                *buttons
-            ], spacing=5)
+                ft.Container(height=10)
+            ], spacing=5, expand=True)
         )
 
     # Inicializar vista
