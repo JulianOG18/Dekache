@@ -1,434 +1,348 @@
 import flet as ft
+import database as db
+from database import create_user, get_user_by_email
+from views.menu_view_admin import MenuViewAdmin
+from views.kanban_view import KanbanView
+from views.editar_pedido_view import EditarPedidoView
+from views.pedidos_view import PedidosView
 
-def admin_view(page: ft.Page):
-    # Configuración de la vista de Admin
+
+
+def admin_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Panel de Administrador"
     page.bgcolor = "#F9F7F2"
 
-    # Colores
+    # Colores base
     c_naranja = "#FF6B00"
     c_naranja_oscuro = "#A04100"
     c_negro = "#101010"
-    c_blanco_hueso = "#F9F7F2"
-    c_gris_claro = "#EFEFEF"
+    c_gris_sidebar = "#F0F0F0"
     c_gris_medio = "#C0C0C0"
 
-    # Contenedor para el contenido dinámico
-    content_area = ft.Container(expand=True)
-
-    # ============== VISTAS ==============
-    def create_home_view():
-        return ft.Column(
-            controls=[],
-            alignment=ft.MainAxisAlignment.START
-        )
-
-    def create_users_view():
-        # Formulario de registro de usuarios
-        nombre_input = ft.TextField(
-            label="Nombre Completo",
-            color="#101010",
-            hint_text="Ej. Juan Pérez",
-            border_color=c_gris_medio,
-            focused_border_color=c_naranja,
-            width=420,
-            height=55,
-            content_padding=15
-        )
-
-        correo_input = ft.TextField(
-            label="Correo Electrónico",
-            color="#101010",
-            hint_text="ejemplo@dekache.com",
-            border_color=c_gris_medio,
-            focused_border_color=c_naranja,
-            width=420,
-            height=55,
-            content_padding=15
-        )
-
-        password_input = ft.TextField(
-            label="Contraseña",
-            color="#101010",
-            hint_text="••••••••",
-            password=True,
-            can_reveal_password=True,
-            border_color=c_gris_medio,
-            focused_border_color=c_naranja,
-            width=420,
-            height=55,
-            content_padding=15
-        )
-
-        rol_dropdown = ft.Dropdown(
-            label="Asignar Rol",
-            color="#101010",
-            options=[
-                ft.dropdown.Option("Administrador"),
-                ft.dropdown.Option("Cajero"),
-                ft.dropdown.Option("Mesero"),
-                ft.dropdown.Option("Cocinero"),
-            ],
-            border_color=c_gris_medio,
-            focused_border_color=c_naranja,
-            width=420,
-            height=55
-        )
-
-#POR COMPLETAR: FUNCION DE REGISTRO DE USUARIOS.
-        def register_user(e):
-            if not nombre_input.value or not correo_input.value or not password_input.value or not rol_dropdown.value:
-                page.snack_bar = ft.SnackBar(
-                    ft.Text("Por favor completa todos los campos", color="white"),
-                    bgcolor="#FF4444"
-                )
-                page.snack_bar.open = True
-                page.update()
-                return
-            
-            page.snack_bar.open = True
+    # ============== VENTANA EMERGENTE (ALERT DIALOG) ==============
+    def mostrar_mensaje(titulo, mensaje, color_titulo):
+        def cerrar_dialogo(e):
+            dialogo.open = False
             page.update()
 
+        dialogo = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(titulo, color=color_titulo, weight="bold"),
+            content=ft.Text(mensaje),
+            actions=[
+                ft.ElevatedButton("Aceptar", on_click=cerrar_dialogo, bgcolor=c_naranja, color="white")
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        
+        page.overlay.append(dialogo)
+        dialogo.open = True
+        page.update()
 
-        def clear_form(e):
+    # ============== ESTRUCTURA DE CONTENIDO ==============
+    content_scroll_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO, spacing=0)
+    content_area = ft.Container(content=content_scroll_column, expand=True, alignment=ft.Alignment(-1, -1))
+
+    # ============== VISTA DE USUARIOS ==============
+    def create_users_view():
+        nombre_input = ft.TextField(
+            label="Nombre Completo", hint_text="Ej. Juan Pérez", border_color=c_gris_medio, color=c_negro,
+            focused_border_color=c_naranja, width=420, height=60, content_padding=15
+        )
+        correo_input = ft.TextField(
+            label="Correo Electrónico", hint_text="jerez@dekache.com", border_color=c_gris_medio, color=c_negro,
+            focused_border_color=c_naranja, width=420, height=60, content_padding=15
+        )
+        password_input = ft.TextField(
+            label="Contraseña", hint_text="••••••••••••", password=True, can_reveal_password=True, color=c_negro,
+            border_color=c_gris_medio, focused_border_color=c_naranja, width=420, height=60, content_padding=15
+        )
+        telefono_input = ft.TextField(
+            label="Teléfono", hint_text="Ej. 3001234567", border_color=c_gris_medio, color=c_negro,
+            focused_border_color=c_naranja, width=420, height=60, content_padding=15,
+            keyboard_type=ft.KeyboardType.PHONE
+        )
+        
+        rol_dropdown = ft.Dropdown(
+            label="Asignar Rol", border_color=c_gris_medio, focused_border_color=c_naranja, color=c_negro,
+            width=860, height=60, hint_text="Seleccione un rol...",
+            options=[
+                ft.dropdown.Option(key="admin", text="Administrador"),
+                ft.dropdown.Option(key="cajero", text="Cajero"),
+                ft.dropdown.Option(key="armador", text="Armador"),
+                ft.dropdown.Option(key="cocinero", text="Cocinero"),
+            ],
+        )
+
+        def limpiar_campos(e=None):
             nombre_input.value = ""
             correo_input.value = ""
             password_input.value = ""
+            telefono_input.value = ""
             rol_dropdown.value = None
             page.update()
 
-        cancel_btn = ft.Container(
-            width=140,
-            height=55,
-            border_radius=10,
-            bgcolor="#E0E0E0",
-            alignment=ft.Alignment(0, 0),
-            content=ft.Text(
-                "Limpiar",
-                color=c_negro,
-                size=14,
-                weight="bold"
-            ),
-            on_click=clear_form
-        )
+        def register_user(e):
+            # 1. Validación de campos vacíos
+            if not nombre_input.value or not correo_input.value or not password_input.value or not telefono_input.value or not rol_dropdown.value:
+                mostrar_mensaje("Atención", "Todos los campos deben rellenarse", "#FF4444")
+                return
+            
+            # Validación de teléfono (solo números y longitud max)
+            telefono_val = telefono_input.value.strip()
+            if not telefono_val.isdigit():
+                mostrar_mensaje("Atención", "El teléfono solo debe contener números", "#FF4444")
+                return
+            if len(telefono_val) > 10:
+                mostrar_mensaje("Atención", "El teléfono no puede superar los 10 dígitos", "#FF4444")
+                return
+            
+            email_a_validar = correo_input.value.strip()
 
-        register_btn = ft.Container(
-            width=220,
-            height=55,
-            border_radius=10,
+            # 2. VALIDACIÓN DE DUPLICADOS (Identificador Único)
+            # Buscamos en la base de datos si el correo ya existe antes de intentar crearlo
+            try:
+                usuario_existente = db.get_user_by_email(email_a_validar)
+                
+                if usuario_existente:
+                    mostrar_mensaje("Error de Registro", f"El correo '{email_a_validar}' ya está registrado. No se permiten duplicados.", "#FF4444")
+                    return
+
+                # 3. Si no existe, procedemos al registro
+                exito = db.create_user(
+                    nombre_input.value.strip(), 
+                    email_a_validar, 
+                    password_input.value.strip(), 
+                    rol_dropdown.value,
+                    telefono_val
+                )
+                
+                if exito:
+                    mostrar_mensaje("Éxito", "Usuario Creado Exitosamente", "green")
+                    limpiar_campos()
+                else:
+                    mostrar_mensaje("Error", "No se pudo completar el registro en la base de datos", "#FF4444")
+            
+            except Exception as ex:
+                error_msg = str(ex).lower()
+                # Doble seguridad por si la DB lanza la excepción de unicidad
+                if "unique" in error_msg or "duplicate" in error_msg:
+                    mostrar_mensaje("Error de Registro", "Ese correo ya está en uso", "#FF4444")
+                else:
+                    mostrar_mensaje("Error del Sistema", f"Ocurrió un error inesperado: {ex}", "#FF4444")
+
+        def select_role(role_key):
+            rol_dropdown.value = role_key
+            page.update()
+
+        def role_chip(icon_path, label, role_key):
+            return ft.Container(
+                content=ft.Row([
+                    ft.Image(src=icon_path, width=16, height=16),
+                    ft.Text(label, size=12, color=c_negro)
+                ], spacing=8),
+                bgcolor="#E0E0E0", padding=ft.Padding.symmetric(horizontal=12, vertical=8), border_radius=10,
+                ink=True,
+                on_click=lambda _: select_role(role_key)
+            )
+
+        def hover_registrar(e):
+            if e.data == "true":
+                btn_registrar.shadow = ft.BoxShadow(blur_radius=25, color="#A0410060", offset=ft.Offset(0, 8))
+            else:
+                btn_registrar.shadow = ft.BoxShadow(blur_radius=15, color="#A0410040", offset=ft.Offset(0, 6))
+            page.update()
+
+        btn_registrar = ft.Container(
+            width=240, height=50, border_radius=10,
             gradient=ft.LinearGradient(
-                begin=ft.Alignment(-1, 0),
-                end=ft.Alignment(1, 0),
+                begin=ft.Alignment(-1, 0), end=ft.Alignment(1, 0),
                 colors=[c_naranja, c_naranja_oscuro]
             ),
+            shadow=ft.BoxShadow(blur_radius=15, color="#A0410040", offset=ft.Offset(0, 6)),
             alignment=ft.Alignment(0, 0),
-            content=ft.Row(
-                controls=[
-                    ft.Image(src="AgregarUser.png", width=24, height=24),
-                    ft.Text(
-                        "REGISTRAR USUARIO",
-                        color="white",
-                        size=14,
-                        weight="bold"
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=10
-            ),
-            on_click=register_user
+            content=ft.Row([
+                ft.Image(src="Registrar_User.png", width=18, height=18),
+                ft.Text("REGISTRAR USUARIO", color="white", size=13, weight="bold")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=10),
+            on_click=register_user,
+            on_hover=hover_registrar,
+            ink=True
         )
 
         return ft.Column(
             controls=[
-                ft.Row(
-                    controls=[
-                        ft.Image(src="AgregarUser.png", width=26, height=26),
-                        ft.Text(
-                            "ADMINISTRACIÓN DE USUARIOS",
-                            size=12,
-                            weight="bold",
-                            color=c_naranja
-                        ),
-                    ],
-                    spacing=10,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER
-                ),
-                ft.Text(
-                    "Registro de Nuevo Personal",
-                    size=32,
-                    weight="bold",
-                    color=c_negro
-                ),
-                ft.Text(
-                    "Cree una nueva cuenta de acceso para el personal del establecimiento.",
-                    size=14,
-                    color="#666666"
-                ),
-                ft.Container(height=30),
-                ft.Row(
-                    controls=[
-                        ft.Column(
-                            controls=[
-                                ft.Text("NOMBRE COMPLETO", size=12, weight="bold", color=c_negro),
-                                nombre_input,
-                            ],
-                            width=440
-                        ),
-                        ft.Container(width=20),
-                        ft.Column(
-                            controls=[
-                                ft.Text("CORREO ELECTRÓNICO", size=12, weight="bold", color=c_negro),
-                                correo_input,
-                            ],
-                            width=440
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.START
-                ),
+                ft.Row([
+                    ft.Image(src="AgregarUser.png", width=22, height=22),
+                    ft.Text("ADMINISTRACIÓN DE USUARIOS", size=11, weight="bold", color="#B15E1D")
+                ], spacing=10),
+                ft.Text("Registro de Nuevo Personal", size=32, weight="bold", color=c_negro),
+                ft.Text("Cree una nueva cuenta de acceso para el personal del establecimiento.", size=14, color="#666666"),
                 ft.Container(height=20),
-                ft.Column(
-                    controls=[
-                        ft.Text("CONTRASEÑA", size=12, weight="bold", color=c_negro),
-                        password_input,
-                    ],
-                    width=900
-                ),
-                ft.Container(height=20),
-                ft.Column(
-                    controls=[
-                        ft.Text("ASIGNAR ROL", size=12, weight="bold", color=c_negro),
-                        rol_dropdown,
-                    ],
-                    width=900
-                ),
-                ft.Container(height=15),
-                ft.Row(
-                    spacing=15,
-                    controls=[
-                        ft.Container(
-                            padding=ft.padding.symmetric(horizontal=12, vertical=8),
-                            bgcolor="#F2F2F2",
-                            border_radius=10,
-                            content=ft.Row(
-                                controls=[
-                                    ft.Image(src="Administrador.png", width=16, height=16),
-                                    ft.Text("Administrador", size=12, color=c_negro)
-                                ],
-                                spacing=8,
-                                vertical_alignment=ft.CrossAxisAlignment.CENTER
-                            )
-                        ),
-                        ft.Container(
-                            padding=ft.padding.symmetric(horizontal=12, vertical=8),
-                            bgcolor="#F2F2F2",
-                            border_radius=10,
-                            content=ft.Row(
-                                controls=[
-                                    ft.Image(src="Cajero.png", width=16, height=16),
-                                    ft.Text("Cajero", size=12, color=c_negro)
-                                ],
-                                spacing=8,
-                                vertical_alignment=ft.CrossAxisAlignment.CENTER
-                            )
-                        ),
-                        ft.Container(
-                            padding=ft.padding.symmetric(horizontal=12, vertical=8),
-                            bgcolor="#F2F2F2",
-                            border_radius=10,
-                            content=ft.Row(
-                                controls=[
-                                    ft.Image(src="Mesero.png", width=16, height=16),
-                                    ft.Text("Mesero", size=12, color=c_negro)
-                                ],
-                                spacing=8,
-                                vertical_alignment=ft.CrossAxisAlignment.CENTER
-                            )
-                        ),
-                        ft.Container(
-                            padding=ft.padding.symmetric(horizontal=12, vertical=8),
-                            bgcolor="#F2F2F2",
-                            border_radius=10,
-                            content=ft.Row(
-                                controls=[
-                                    ft.Image(src="Cocinero.png", width=16, height=16),
-                                    ft.Text("Cocinero", size=12, color=c_negro)
-                                ],
-                                spacing=8,
-                                vertical_alignment=ft.CrossAxisAlignment.CENTER
-                            )
-                        ),
-                    ]
-                ),
-                ft.Container(height=30),
-                ft.Row(
-                    controls=[cancel_btn, register_btn],
-                    spacing=20
-                ),
+                ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Column([nombre_input]),
+                            ft.Column([correo_input]),
+                        ], spacing=20),
+                        ft.Container(height=10),
+                        ft.Row([
+                            ft.Column([telefono_input]),
+                        ], spacing=20),
+                        ft.Container(height=10),
+                        ft.Row([
+                            ft.Column([password_input]),
+                        ], spacing=20),
+                        ft.Container(height=10),
+                        ft.Column([rol_dropdown]),
+                        ft.Container(height=5),
+                        ft.Row([
+                            role_chip("Administrador.png", "Administrador", "admin"),
+                            role_chip("Cajero.png", "Cajero", "cajero"),
+                            role_chip("Armador.png", "Armador", "armador"),
+                            role_chip("Cocinero.png", "Cocinero", "cocinero"),
+                        ], spacing=10),
+                        ft.Container(height=25),
+                        ft.Row([
+                            ft.Button(
+                                "Limpiar", bgcolor="#F0F0F0", color=c_negro,
+                                width=120, height=50, on_click=limpiar_campos,
+                            ),
+                            btn_registrar,
+                        ], alignment=ft.MainAxisAlignment.END, spacing=15)
+                    ], spacing=10),
+                    bgcolor="white", padding=30, border_radius=15, border=ft.Border.all(1, "#EEEEEE")
+                )
             ],
-            scroll="auto",
-            spacing=0
+            tight=True, spacing=10
         )
 
+    # --- Lógica de Navegación Interior ---
     def create_menu_view():
-        return ft.Column(
-            controls=[
-                ft.Text(
-                    "MENÚ",
-                    size=28,
-                    weight="bold",
-                    color=c_negro
-                ),
-                ft.Container(height=20),
-            ],
-            alignment=ft.MainAxisAlignment.START
-        )
+        try:
+            datos_frescos = db.get_products_with_recipes()
+        except Exception as e:
+            print(f"Error cargando datos: {e}")
+            datos_frescos = []
+        return MenuViewAdmin(products_data=datos_frescos)
 
-    # ============== FUNCIONES DE NAVEGACIÓN ==============
     def show_view(view_name):
-        if view_name == "home":
-            content_area.content = ft.Container(
-                expand=True,
-                padding=30,
-                content=create_home_view()
-            )
+        content_scroll_column.controls.clear()
+        if view_name == "kanban":
+            target = KanbanView(page)
+        elif view_name == "pedidos":
+            target = PedidosView(page)
         elif view_name == "users":
-            content_area.content = ft.Container(
-                expand=True,
-                padding=30,
-                content=create_users_view()
-            )
+            target = create_users_view()
         elif view_name == "menu":
-            content_area.content = ft.Container(
-                expand=True,
-                padding=30,
-                content=create_menu_view()
-            )
+            target = create_menu_view()
+        elif view_name == "editar":
+            target = EditarPedidoView(page)
+        
+        content_scroll_column.controls.append(
+            ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
+        )
         page.update()
 
-    # ============== BARRA SUPERIOR ==============
+    # --- Estructura Principal ---
     def create_top_bar():
         return ft.Container(
-            bgcolor=c_negro,
-            padding=ft.padding.symmetric(horizontal=20, vertical=12),
-            content=ft.Row(
-                controls=[
-                    # Logo/Título
-                    ft.Text("Dekache", size=20, weight="bold", color="white"),
-                    
-                    # Espaciador
-                    ft.Container(expand=True),
-                    
-                    # Menú superior
-                    ft.Row(
-                        spacing=30,
-                        controls=[
-                            ft.TextButton(
-                                "Users",
-                                style=ft.ButtonStyle(color="white"),
-                                on_click=lambda e: show_view("users")
-                            ),
-                            ft.TextButton(
-                                "Reports",
-                                style=ft.ButtonStyle(color=c_gris_medio),
-                                disabled=True,
-                                tooltip="Próximamente"
-                            ),
-                            ft.TextButton(
-                                "Inventory",
-                                style=ft.ButtonStyle(color=c_gris_medio),
-                                disabled=True,
-                                tooltip="Próximamente"
-                            ),
-                        ]
-                    ),
-                    ft.Container(width=20),
-                    ft.ElevatedButton(
-                        "Cerrar Sesión",
-                        bgcolor=c_gris_claro,
-                        color=c_negro,
-                        on_click=lambda e: page.go_to_login(e)
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER
-            ),
-            height=70
+            bgcolor=c_negro, height=70, padding=ft.Padding.symmetric(horizontal=20),
+            content=ft.Row([
+                ft.Row([
+                    ft.Text(spans=[
+                        ft.TextSpan("Deka", style=ft.TextStyle(color=c_naranja, weight="bold")),
+                        ft.TextSpan("che", style=ft.TextStyle(color="white", weight="bold")),
+                    ], size=22),
+                    ft.Container(width=7, height=7, bgcolor=c_naranja, border_radius=50),
+                    ft.Container(width=7, height=7, bgcolor="#F7D32E", border_radius=50),
+                ], spacing=6),
+                ft.Container(expand=True),
+            ])
         )
 
-    # ============== BARRA LATERAL ==============
     def create_sidebar():
-        sidebar_items = [
-            ("Home.png", "Home", "home"),
-            ("Users.png", "Users", "users"),
-            ("Menu.png", "Menu", "menu"),
+        items = [
+            ("Home.png",    "Tablero Kanban",  "kanban"), 
+            ("Pedidos.png", "Pedidos",          "pedidos"),
+            ("EditarPedido.png",  "Editar Pedidos",   "editar"),
+            ("Users.png",   "Crear Usuarios",   "users"), 
+            ("Menu.png",    "Menú",             "menu")
         ]
-
-        sidebar_controls = [
-            ft.Container(
-                padding=ft.padding.symmetric(vertical=20, horizontal=15),
-                content=ft.Text(
-                    "SYSTEM CONTROL",
-                    size=11,
-                    weight="bold",
-                    color=c_negro
-                )
-            )
-        ]
-
-        for icon, label, view_id in sidebar_items:
-            sidebar_controls.append(
+        buttons = []
+        for icon, label, vid in items:
+            buttons.append(
                 ft.Container(
-                    padding=ft.padding.symmetric(vertical=12, horizontal=15),
-                    content=ft.Row(
-                        spacing=15,
-                        controls=[
-                            ft.Image(
-                                src=icon,
-                                width=24,
-                                height=24
-                            ),
-                            ft.Text(label, size=14, weight="500", color=c_negro),
-                        ]
-                    ),
-                    on_click=lambda e, v=view_id: show_view(v),
-                    ink=True
+                    padding=ft.Padding.symmetric(vertical=12, horizontal=20),
+                    on_click=lambda e, v=vid: show_view(v),
+                    ink=True,
+                    content=ft.Row([
+                        ft.Image(src=icon, width=22, height=22), 
+                        ft.Text(label, color=c_negro, weight="bold", size=14)
+                    ], spacing=15)
                 )
             )
 
-        return ft.Container(
-            bgcolor=c_blanco_hueso,
-            width=200,
-            padding=ft.padding.only(top=20),
-            content=ft.Column(
-                controls=sidebar_controls,
-                spacing=0
+        def logout_click(e):
+            def cerrar_modal(e):
+                confirm_dialog.open = False
+                page.update()
+
+            def ejecutar_logout(e):
+                confirm_dialog.open = False
+                page.update()
+                callback_logout(None)
+
+            confirm_dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("Confirmar Cierre de Sesión", weight="bold", color=c_naranja),
+                content=ft.Text("¿Realmente desea cerrar su sesión?"),
+                actions=[
+                    ft.TextButton("Cancelar", on_click=cerrar_modal),
+                    ft.ElevatedButton("Cerrar Sesión", bgcolor="#FF4444", color="white", on_click=ejecutar_logout),
+                ],
+                actions_alignment=ft.MainAxisAlignment.END,
             )
+            page.overlay.append(confirm_dialog)
+            confirm_dialog.open = True
+            page.update()
+        
+        return ft.Container(
+            bgcolor=c_gris_sidebar,
+            width=240, 
+            content=ft.Column([
+                ft.Column([
+                    ft.Container(height=20),
+                    ft.Container(
+                        content=ft.Text("SYSTEM CONTROL", size=11, weight="bold", color="#777777"),
+                        padding=ft.Padding.only(left=20, bottom=10)
+                    ),
+                    *buttons,
+                ], expand=True),
+                # Botón de Cerrar Sesión al fondo
+                ft.Container(
+                    padding=ft.Padding.symmetric(vertical=12, horizontal=20),
+                    on_click=logout_click,
+                    ink=True,
+                    content=ft.Row([
+                        ft.Image(src="CerrarSesion.png", width=22, height=22), 
+                        ft.Text("CERRAR SESIÓN", color="#656464", weight="bold", size=14)
+                    ], spacing=15)
+                ),
+                ft.Container(height=10)
+            ], spacing=5, expand=True)
         )
 
-    # ============== INICIALIZAR CONTENIDO ==============
-    content_area.content = ft.Container(
-        expand=True,
-        padding=30,
-        content=create_home_view()
-    )
-
-    # ============== LAYOUT PRINCIPAL ==============
+    # Iniciar la vista
+    show_view("kanban")
     page.controls.clear()
     page.add(
-        ft.Column(
-            expand=True,
-            spacing=0,
-            controls=[
-                create_top_bar(),
-                ft.Row(
-                    expand=True,
-                    spacing=0,
-                    controls=[
-                        create_sidebar(),
-                        content_area
-                    ]
-                )
-            ]
-        )
+        ft.Column(expand=True, spacing=0, controls=[
+            create_top_bar(),
+            ft.Row(expand=True, spacing=0, controls=[
+                create_sidebar(), 
+                content_area
+            ])
+        ])
     )
     page.update()
