@@ -222,10 +222,10 @@ class PedidosView(ft.Container):
             self.filtrar_categoria(self.categoria_actual)
             return
             
-            self.productos_filtrados = [
-                p for p in self.productos 
+        self.productos_filtrados = [
+            p for p in self.productos 
             if query in p.get("nombre", "").lower() and (self.categoria_actual == "TODO" or p.get("categoria", "").lower() == self.categoria_actual.lower())
-            ]
+        ]
         self.actualizar_grid()
         self.main_page.update()
 
