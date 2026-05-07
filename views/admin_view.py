@@ -6,12 +6,7 @@ from views.kanban_view import KanbanView
 from views.editar_pedido_view import EditarPedidoView
 from views.pedidos_view import PedidosView
 
-# Intentar obtener datos iniciales de SQL Server
-try:
-    datos_reales = db.get_products_with_recipes()
-except Exception as e:
-    print(f"Error cargando datos: {e}")
-    datos_reales = []
+
 
 def admin_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Panel de Administrador"
@@ -224,7 +219,12 @@ def admin_view(page: ft.Page, callback_logout):
 
     # --- Lógica de Navegación Interior ---
     def create_menu_view():
-        return MenuViewAdmin(products_data=datos_reales)
+        try:
+            datos_frescos = db.get_products_with_recipes()
+        except Exception as e:
+            print(f"Error cargando datos: {e}")
+            datos_frescos = []
+        return MenuViewAdmin(products_data=datos_frescos)
 
     def show_view(view_name):
         content_scroll_column.controls.clear()

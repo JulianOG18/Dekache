@@ -42,6 +42,8 @@ class MenuViewAdmin(ft.Container):
     def __init__(self, products_data=None):
         super().__init__()
         self.products_data = products_data if products_data else []
+        self.PAGE_SIZE = 5
+        self.current_page = 0  # índice de página basado en 0
         
         self.bgcolor = CLR_BLANCO_HUESO
         self.padding = ft.Padding.only(left=25, top=25, right=25, bottom=40)
@@ -860,12 +862,35 @@ class MenuViewAdmin(ft.Container):
         self.table_panel.content = self.build_table_content()
         self.update()
 
+    def ir_pagina_anterior(self, e):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.table_panel.content = self.build_table_content()
+            self.update()
+
+    def ir_pagina_siguiente(self, e):
+        total_pages = max(1, -(-len(self.products_data) // self.PAGE_SIZE))  # ceil division
+        if self.current_page < total_pages - 1:
+            self.current_page += 1
+            self.table_panel.content = self.build_table_content()
+            self.update()
+
     # ═══════════════════════════════════════════
     #  TABLA DE PRODUCTOS
     # ═══════════════════════════════════════════
     def build_table_content(self):
+        total = len(self.products_data)
+        total_pages = max(1, -(-total // self.PAGE_SIZE))  # ceil division
+        # Clamp current_page en caso de que los datos cambien
+        if self.current_page >= total_pages:
+            self.current_page = max(0, total_pages - 1)
+
+        start = self.current_page * self.PAGE_SIZE
+        end = start + self.PAGE_SIZE
+        page_products = self.products_data[start:end]
+
         rows = []
-        for p in self.products_data:
+        for p in page_products:
             costo_prod = sum(item.get("costo", 0) for item in p.get("receta", []))
             stock = p.get("stock_actual", 0)
             
@@ -931,6 +956,48 @@ class MenuViewAdmin(ft.Container):
                 ]
             ))
 
+        # ── Footer de paginación ──
+        mostrando_inicio = start + 1 if total > 0 else 0
+        mostrando_fin = min(end, total)
+        puede_anterior = self.current_page > 0
+        puede_siguiente = self.current_page < total_pages - 1
+
+        paginacion_footer = ft.Container(
+            padding=ft.Padding.only(top=16),
+            border=ft.Border(top=ft.BorderSide(1, CLR_BORDE)),
+            content=ft.Row([
+                ft.Text(
+                    f"Mostrando {mostrando_inicio}–{mostrando_fin} de {total} productos",
+                    size=12,
+                    color=CLR_TEXTO_SEC,
+                ),
+                ft.Row([
+                    ft.Container(
+                        content=ft.Image(src="anterior.png", width=22, height=22,
+                                         opacity=1.0 if puede_anterior else 0.3),
+                        ink=puede_anterior,
+                        border_radius=6,
+                        on_click=self.ir_pagina_anterior if puede_anterior else None,
+                        tooltip="Página anterior",
+                    ),
+                    ft.Text(
+                        f"{self.current_page + 1} / {total_pages}",
+                        size=12,
+                        color=CLR_TEXTO,
+                        weight="bold",
+                    ),
+                    ft.Container(
+                        content=ft.Image(src="siguiente.png", width=22, height=22,
+                                         opacity=1.0 if puede_siguiente else 0.3),
+                        ink=puede_siguiente,
+                        border_radius=6,
+                        on_click=self.ir_pagina_siguiente if puede_siguiente else None,
+                        tooltip="Página siguiente",
+                    ),
+                ], spacing=12, alignment=ft.MainAxisAlignment.END),
+            ], alignment="spaceBetween", vertical_alignment=ft.CrossAxisAlignment.CENTER)
+        )
+
         return ft.Column([
             ft.Text("Catálogo de Productos", size=22, weight="bold", color=CLR_TEXTO),
             ft.DataTable(
@@ -948,7 +1015,8 @@ class MenuViewAdmin(ft.Container):
                     ft.DataColumn(ft.Text("ACCIONES", size=11, color=CLR_NARANJA, weight="bold")),
                 ],
                 rows=rows,
-            )
+            ),
+            paginacion_footer,
         ])
 
     # ═══════════════════════════════════════════
