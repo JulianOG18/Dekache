@@ -272,6 +272,9 @@ class PedidosView(ft.Container):
         # Buscar si ya existe
         for item in self.ticket_items:
             if item['id_producto'] == producto['id']:
+                if item['cantidad'] + 1 > producto.get('stock_actual', 0):
+                    show_snackbar(self.main_page, "No hay Stock para preparar el pedido.", "red")
+                    return
                 item['cantidad'] += 1
                 item['subtotal'] = item['cantidad'] * item['precio_venta']
                 self.actualizar_ticket()
@@ -279,6 +282,10 @@ class PedidosView(ft.Container):
                 return
         
         # Si no existe, agregarlo
+        if 1 > producto.get('stock_actual', 0):
+            show_snackbar(self.main_page, "No hay Stock para preparar el pedido.", "red")
+            return
+            
         self.ticket_items.append({
             'id_producto': producto['id'],
             'nombre': producto['nombre'],
@@ -296,6 +303,10 @@ class PedidosView(ft.Container):
         if nueva_cantidad <= 0:
             self.ticket_items.pop(index)
         else:
+            producto = next((p for p in self.productos if p['id'] == item['id_producto']), None)
+            if producto and nueva_cantidad > producto.get('stock_actual', 0):
+                show_snackbar(self.main_page, "No hay Stock para preparar el pedido.", "red")
+                return
             item['cantidad'] = nueva_cantidad
             item['subtotal'] = nueva_cantidad * item['precio_venta']
         self.actualizar_ticket()

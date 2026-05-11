@@ -118,6 +118,10 @@ class EditarPedidoView(ft.Container):
         if nueva_cantidad <= 0:
             self.eliminar_item(index)
         else:
+            producto = next((p for p in self.todos_productos if p['id'] == item['id_producto']), None)
+            if producto and nueva_cantidad > producto.get('stock_actual', 0):
+                show_snackbar(self.main_page, "No hay Stock para preparar el pedido.", "red")
+                return
             item['cantidad'] = nueva_cantidad
             item['subtotal'] = nueva_cantidad * item['precio_venta']
             self.renderizar_pedido()
@@ -187,6 +191,9 @@ class EditarPedidoView(ft.Container):
         # Si ya existe, sumar cantidad
         for item in self.items_editados:
             if item['id_producto'] == prod['id']:
+                if item['cantidad'] + 1 > prod.get('stock_actual', 0):
+                    show_snackbar(self.main_page, "No hay Stock para preparar el pedido.", "red")
+                    return
                 item['cantidad'] += 1
                 item['subtotal'] = item['cantidad'] * item['precio_venta']
                 self.renderizar_pedido()
@@ -194,6 +201,10 @@ class EditarPedidoView(ft.Container):
                 return
         
         # Si no, agregarlo nuevo
+        if 1 > prod.get('stock_actual', 0):
+            show_snackbar(self.main_page, "No hay Stock para preparar el pedido.", "red")
+            return
+            
         self.items_editados.append({
             "id_producto": prod['id'],
             "cantidad": 1,

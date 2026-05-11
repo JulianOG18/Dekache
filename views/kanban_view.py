@@ -1,6 +1,6 @@
 import flet as ft
 from datetime import datetime
-from database import get_active_orders, update_order_status, get_avg_completion_time
+from database import get_active_orders, update_order_status, get_avg_completion_time, get_products_with_recipes
 
 # Paleta de colores
 CLR_NARANJA     = "#FF6B00"
@@ -53,6 +53,9 @@ class KanbanView(ft.Container):
         self.txt_tiempo_seg_label = ft.Text("s", size=20, weight="bold", color=CLR_TEXTO_SEC)
         self.txt_tiempo_nota = ft.Text("Sin datos aún", size=11, color="#43A047")
         
+        self.txt_alertas_count = ft.Text("0", size=36, weight="bold", color="#43A047")
+        self.txt_alertas_nota = ft.Text("Todo bajo control", size=11, color=CLR_TEXTO_SEC)
+        
         self.construir_ui()
         self.cargar_datos()
 
@@ -62,6 +65,7 @@ class KanbanView(ft.Container):
 
     def cargar_datos(self):
         self.pedidos = get_active_orders()
+        self.productos = get_products_with_recipes()
         self.actualizar_tablero()
 
     def mover_pedido(self, id_pedido, nuevo_estado):
@@ -193,6 +197,20 @@ class KanbanView(ft.Container):
         # Calcular tiempo promedio real
         self.actualizar_tiempo_promedio()
         
+        # Alertas de stock
+        productos_alerta = [p for p in getattr(self, 'productos', []) if p.get('stock_actual', 0) < 20]
+        num_alertas = len(productos_alerta)
+        self.txt_alertas_count.value = str(num_alertas)
+        if num_alertas == 0:
+            self.txt_alertas_count.color = "#43A047"
+            self.txt_alertas_nota.value = "Todo bajo control"
+        else:
+            self.txt_alertas_count.color = "#E53935"
+            if num_alertas == 1:
+                self.txt_alertas_nota.value = "1 producto con stock < 20"
+            else:
+                self.txt_alertas_nota.value = f"{num_alertas} productos con stock < 20"
+        
         try:
             self.main_page.update()
         except:
@@ -292,8 +310,8 @@ class KanbanView(ft.Container):
                 shadow=ft.BoxShadow(blur_radius=5, color="#05000000"),
                 content=ft.Column([
                     ft.Text("ALERTAS DE STOCK", size=11, weight="bold", color=CLR_TEXTO_SEC),
-                    ft.Text("0", size=36, weight="bold", color="#E53935"),
-                    ft.Text("Todo bajo control", size=11, color=CLR_TEXTO_SEC)
+                    self.txt_alertas_count,
+                    self.txt_alertas_nota
                 ], horizontal_alignment="center")
             )
         ], spacing=20)
