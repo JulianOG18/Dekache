@@ -1,5 +1,5 @@
 import flet as ft
-from database import get_active_orders, get_order_for_edit, update_order_items, get_products_with_recipes
+from database import get_active_orders, get_order_for_edit, update_order_items, get_products_with_recipes, cancel_order_and_restore_stock
 
 CLR_NARANJA     = "#FF6B00"
 CLR_NEGRO       = "#101010"
@@ -238,6 +238,37 @@ class EditarPedidoView(ft.Container):
         self.pedido_actual = None
         self.main_page.update()
 
+    def abrir_dialogo_cancelar(self, e):
+        def confirmar_cancelacion(ev):
+            exito = cancel_order_and_restore_stock(self.pedido_actual['id_pedido'])
+            if exito:
+                self.main_page.pubsub.send_all(f"order_cancelled:{self.pedido_actual['id_pedido']}")
+                self.mostrar_vacio()
+                self.pedido_actual = None
+                dialogo.open = False
+                self.main_page.update()
+            else:
+                show_snackbar(self.main_page, "Error al cancelar el pedido.", "red")
+                dialogo.open = False
+                self.main_page.update()
+
+        def cerrar_modal(ev):
+            dialogo.open = False
+            self.main_page.update()
+
+        dialogo = ft.AlertDialog(
+            title=ft.Text("Confirmar Cancelación", color="#E53935"),
+            content=ft.Text("¿Estás seguro que deseas cancelar este pedido? El stock será restaurado automáticamente y se notificará a las demás áreas."),
+            actions=[
+                ft.TextButton("Volver", on_click=cerrar_modal),
+                ft.Button("Sí, Cancelar Pedido", bgcolor="#E53935", color=CLR_BLANCO, on_click=confirmar_cancelacion)
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.main_page.overlay.append(dialogo)
+        dialogo.open = True
+        self.main_page.update()
+
     def renderizar_pedido(self):
         # Cabecera de la tarjeta del pedido
         card_header = ft.Row([
@@ -376,6 +407,7 @@ class EditarPedidoView(ft.Container):
                 ], spacing=10)
             ]),
             ft.Row([
+                ft.Button("CANCELAR PEDIDO", bgcolor="#E53935", color=CLR_BLANCO, height=45, on_click=self.abrir_dialogo_cancelar),
                 ft.Button("CANCELAR CAMBIOS", bgcolor=CLR_GRIS_CLARO, color=CLR_TEXTO_SEC, height=45, on_click=self.cancelar_cambios),
                 ft.Button("ACTUALIZAR PEDIDO Y NOTIFICAR A COCINA", bgcolor=CLR_NARANJA, color=CLR_BLANCO, height=45, on_click=self.confirmar_cambios)
             ], spacing=15)

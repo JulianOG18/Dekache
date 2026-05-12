@@ -62,6 +62,38 @@ class KanbanView(ft.Container):
     def on_pubsub_message(self, message):
         if message == "update_kanban":
             self.cargar_datos()
+        elif isinstance(message, str) and message.startswith("order_cancelled:"):
+            id_pedido = message.split(":")[1]
+            self.mostrar_alerta_cancelacion(id_pedido)
+            self.cargar_datos()
+
+    def mostrar_alerta_cancelacion(self, id_pedido):
+        def hide_banner(e=None):
+            self.main_page.banner.open = False
+            self.main_page.update()
+
+        banner = ft.Banner(
+            bgcolor="#E53935",
+            leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED if hasattr(ft.icons, "WARNING_AMBER_ROUNDED") else None, color="white", size=40),
+            content=ft.Text(f"Pedido #{id_pedido} ha sido CANCELADO y el stock ha sido restaurado.", color="white", weight="bold"),
+            actions=[ft.TextButton("Entendido", style=ft.ButtonStyle(color="white"), on_click=hide_banner)]
+        )
+        self.main_page.banner = banner
+        self.main_page.banner.open = True
+        self.main_page.update()
+        
+        # Ocultar a los 30 segundos
+        import threading
+        def close_after_30s():
+            import time
+            time.sleep(30)
+            if self.main_page.banner == banner and banner.open:
+                banner.open = False
+                try:
+                    self.main_page.update()
+                except:
+                    pass
+        threading.Thread(target=close_after_30s, daemon=True).start()
 
     def cargar_datos(self):
         self.pedidos = get_active_orders()
