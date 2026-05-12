@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
 import database as db
-from database import validate_user
+from database import validate_user, ensure_foto_perfil_column
 from views.admin_view import admin_view
 from views.cocinero_view import cocinero_view
 from views.armador_view import armador_view
@@ -19,6 +19,9 @@ def main(page: ft.Page):
     page.window_width = 1200
     page.window_height = 800
     page.bgcolor = "#F9F7F2"
+
+    # Migración: asegurar que la columna foto_perfil exista
+    ensure_foto_perfil_column()
 
     # --- Colores ---
     c_naranja      = "#FF6B00"
@@ -193,7 +196,13 @@ def main(page: ft.Page):
             if role:
                 login_attempts = 0
 
-                role_lower = role.lower()
+                # Guardar datos del usuario en page para uso global
+                page.user_correo = role["correo"]
+                page.user_nombre = role["nombre"]
+                page.user_rol = role["rol"]
+                page.user_foto = role["foto_perfil"]
+
+                role_lower = role["rol"].lower()
                 if role_lower == "admin":
                     admin_view(page, callback_logout=show_login_view)
                 elif role_lower == "cocinero":

@@ -1,5 +1,6 @@
 import flet as ft
 from views.kanban_view import KanbanView
+from views.ajustes_view import AjustesView
 
 def armador_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Centro de Armado"
@@ -10,6 +11,14 @@ def armador_view(page: ft.Page, callback_logout):
     c_negro = "#101010"
     c_gris_sidebar = "#F0F0F0"
 
+    # Datos del usuario logueado
+    user_nombre = getattr(page, "user_nombre", "Armador")
+    user_rol = getattr(page, "user_rol", "Armador")
+    user_foto = getattr(page, "user_foto", "Perfil.png")
+    user_correo = getattr(page, "user_correo", "")
+    primer_nombre = user_nombre.split()[0] if user_nombre else "Armador"
+    top_bar_foto = ft.Image(src=user_foto, width=36, height=36, fit="cover", border_radius=18)
+
     content_scroll_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
     content_area = ft.Container(content=content_scroll_column, expand=True, alignment=ft.Alignment(-1, -1))
 
@@ -17,10 +26,13 @@ def armador_view(page: ft.Page, callback_logout):
         content_scroll_column.controls.clear()
         if view_name == "kanban":
             target = KanbanView(page)
+        elif view_name == "ajustes":
+            target = AjustesView(page, user_correo)
         
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
         )
+        top_bar_foto.src = getattr(page, "user_foto", "Perfil.png")
         page.update()
 
     def create_top_bar():
@@ -36,12 +48,26 @@ def armador_view(page: ft.Page, callback_logout):
                     ft.Container(width=7, height=7, bgcolor="#F7D32E", border_radius=50),
                 ], spacing=6),
                 ft.Container(expand=True),
+                ft.Row([
+                    ft.Column([
+                        ft.Text(user_rol.upper(), size=10, weight="bold", color=c_naranja),
+                        ft.Text(primer_nombre, size=13, weight="w500", color="white"),
+                    ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.END),
+                    ft.Container(
+                        content=top_bar_foto,
+                        width=36, height=36,
+                        border_radius=18,
+                        clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                        border=ft.Border.all(2, c_naranja),
+                    ),
+                ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
             ])
         )
 
     def create_sidebar():
         items = [
-            ("Home.png", "Tablero Kanban", "kanban"), 
+            ("Home.png", "Tablero Kanban", "kanban"),
+            ("Perfil.png", "Ajustes", "ajustes"),
         ]
         
         buttons = [

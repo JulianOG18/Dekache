@@ -242,7 +242,13 @@ class EditarPedidoView(ft.Container):
         def confirmar_cancelacion(ev):
             exito = cancel_order_and_restore_stock(self.pedido_actual['id_pedido'])
             if exito:
-                self.main_page.pubsub.send_all(f"order_cancelled:{self.pedido_actual['id_pedido']}")
+                id_cancelado = self.pedido_actual['id_pedido']
+                self.main_page.pubsub.send_all(f"order_cancelled:{id_cancelado}")
+                show_snackbar(
+                    self.main_page,
+                    f"Pedido #{id_cancelado} cancelado y desistimado del tablero Kanban.",
+                    "#E53935"
+                )
                 self.mostrar_vacio()
                 self.pedido_actual = None
                 dialogo.open = False

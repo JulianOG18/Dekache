@@ -2,6 +2,7 @@ import flet as ft
 from views.pedidos_view import PedidosView
 from views.kanban_view import KanbanView
 from views.editar_pedido_view import EditarPedidoView
+from views.ajustes_view import AjustesView
 
 def cajero_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Terminal de Ventas"
@@ -11,6 +12,18 @@ def cajero_view(page: ft.Page, callback_logout):
     c_naranja_oscuro = "#A04100"
     c_negro = "#101010"
     c_gris_sidebar = "#F0F0F0"
+
+    # Datos del usuario logueado
+    user_nombre = getattr(page, "user_nombre", "Usuario")
+    user_rol = getattr(page, "user_rol", "Cajero")
+    user_foto = getattr(page, "user_foto", "Perfil.png")
+    user_correo = getattr(page, "user_correo", "")
+
+    # Extraer solo el primer nombre
+    primer_nombre = user_nombre.split()[0] if user_nombre else "Usuario"
+
+    # Controles de la barra superior que se actualizan
+    top_bar_foto = ft.Image(src=user_foto, width=36, height=36, fit="cover", border_radius=18)
 
     content_scroll_column = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
     content_area = ft.Container(content=content_scroll_column, expand=True, alignment=ft.Alignment(-1, -1))
@@ -23,10 +36,14 @@ def cajero_view(page: ft.Page, callback_logout):
             target = PedidosView(page)
         elif view_name == "editar":
             target = EditarPedidoView(page)
+        elif view_name == "ajustes":
+            target = AjustesView(page, user_correo)
 
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
         )
+        # Actualizar la foto en la barra superior por si cambió
+        top_bar_foto.src = getattr(page, "user_foto", "Perfil.png")
         page.update()
 
     def create_top_bar():
@@ -42,6 +59,19 @@ def cajero_view(page: ft.Page, callback_logout):
                     ft.Container(width=7, height=7, bgcolor="#F7D32E", border_radius=50),
                 ], spacing=6),
                 ft.Container(expand=True),
+                ft.Row([
+                    ft.Column([
+                        ft.Text(user_rol.upper(), size=10, weight="bold", color=c_naranja),
+                        ft.Text(primer_nombre, size=13, weight="w500", color="white"),
+                    ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.END),
+                    ft.Container(
+                        content=top_bar_foto,
+                        width=36, height=36,
+                        border_radius=18,
+                        clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                        border=ft.Border.all(2, c_naranja),
+                    ),
+                ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
             ])
         )
 
@@ -49,7 +79,8 @@ def cajero_view(page: ft.Page, callback_logout):
         items = [
             ("Home.png",    "Tablero Kanban", "kanban"), 
             ("Pedidos.png", "Pedidos",         "pedidos"),
-            ("EditarPedido.png",  "Editar Pedido",   "editar")
+            ("EditarPedido.png",  "Editar Pedido",   "editar"),
+            ("Perfil.png",  "Ajustes",         "ajustes"),
         ]
         
         buttons = [
@@ -112,8 +143,6 @@ def cajero_view(page: ft.Page, callback_logout):
                 ft.Container(height=10)
             ], spacing=5, expand=True)
         )
-
-    # Eliminar este bloque duplicado, ya se inicializa abajo
     
     # Inicializar la vista
     show_view("kanban")
