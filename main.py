@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import flet as ft
 import asyncio
 import database as db
