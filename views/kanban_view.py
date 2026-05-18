@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import flet as ft
 from datetime import datetime
 from database import get_active_orders, update_order_status, get_avg_completion_time, get_products_with_recipes

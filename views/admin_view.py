@@ -7,6 +7,7 @@ from views.kanban_view import KanbanView
 from views.editar_pedido_view import EditarPedidoView
 from views.pedidos_view import PedidosView
 from views.ajustes_view import AjustesView
+from views.inventario_view import InventarioView
 
 
 
@@ -250,12 +251,35 @@ def admin_view(page: ft.Page, callback_logout):
             target = EditarPedidoView(page)
         elif view_name == "ajustes":
             target = AjustesView(page, user_correo)
+        elif view_name == "inventario":
+            target = InventarioView(page, user_correo)
         
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
         )
         top_bar_foto.src = getattr(page, "user_foto", "Perfil.png")
         page.update()
+
+    # Alerta Global de Inventario (HU-07)
+    # Se utiliza ft.Image para evitar problemas de compatibilidad con iconos Flet antiguos
+    # NOTA: El usuario puede colocar una imagen "AlertaStock.png" personalizada en assets/
+    img_alerta = ft.Image(
+        src="AlertaStock.png", 
+        width=22, 
+        height=22, 
+        tooltip="¡Insumos en estado crítico!", 
+        visible=db.check_critical_stock()
+    )
+
+    def on_inventory_pubsub(message):
+        if message in ("inventory_update", "update_kanban"):
+            img_alerta.visible = db.check_critical_stock()
+            try:
+                page.update()
+            except:
+                pass
+
+    page.pubsub.subscribe(on_inventory_pubsub)
 
     # --- Estructura Principal ---
     def create_top_bar():
@@ -272,6 +296,7 @@ def admin_view(page: ft.Page, callback_logout):
                 ], spacing=6),
                 ft.Container(expand=True),
                 ft.Row([
+                    img_alerta,
                     ft.Column([
                         ft.Text(user_rol.upper(), size=10, weight="bold", color="#8E8E8E"),
                         ft.Text(primer_nombre, size=13, weight="w600", color="white"),
@@ -294,6 +319,7 @@ def admin_view(page: ft.Page, callback_logout):
             ("EditarPedido.png",  "Editar Pedidos",   "editar"),
             ("Users.png",   "Crear Usuarios",   "users"), 
             ("Menu.png",    "Menú",             "menu"),
+            ("Inventario.png", "Inventario",    "inventario"),
             ("Ajustes.png",  "Ajustes de Perfil",          "ajustes"),
         ]
         buttons = []
@@ -341,7 +367,10 @@ def admin_view(page: ft.Page, callback_logout):
                 ft.Column([
                     ft.Container(height=20),
                     ft.Container(
-                        content=ft.Text("SYSTEM CONTROL", size=11, weight="bold", color="#777777"),
+                        content=ft.Row([
+                            ft.Image(src="Inventario.png", width=14, height=14),
+                            ft.Text("SYSTEM CONTROL", size=11, weight="bold", color="#777777")
+                        ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                         padding=ft.Padding.only(left=20, bottom=10)
                     ),
                     *buttons,

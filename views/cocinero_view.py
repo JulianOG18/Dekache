@@ -2,6 +2,7 @@
 import flet as ft
 from views.kanban_view import KanbanView
 from views.ajustes_view import AjustesView
+from database import check_critical_stock
 
 def cocinero_view(page: ft.Page, callback_logout):
     page.title = "Dekache - Área de Cocina"
@@ -37,6 +38,25 @@ def cocinero_view(page: ft.Page, callback_logout):
         top_bar_foto.src = getattr(page, "user_foto", "Perfil.png")
         page.update()
 
+    # Alerta Global de Inventario (HU-07)
+    img_alerta = ft.Image(
+        src="AlertaStock.png", 
+        width=22, 
+        height=22, 
+        tooltip="¡Insumos en estado crítico!", 
+        visible=check_critical_stock()
+    )
+
+    def on_inventory_pubsub(message):
+        if message in ("inventory_update", "update_kanban"):
+            img_alerta.visible = check_critical_stock()
+            try:
+                page.update()
+            except:
+                pass
+
+    page.pubsub.subscribe(on_inventory_pubsub)
+
     def create_top_bar():
         return ft.Container(
             bgcolor=c_negro, height=70, padding=ft.Padding.symmetric(horizontal=20),
@@ -51,6 +71,7 @@ def cocinero_view(page: ft.Page, callback_logout):
                 ], spacing=6),
                 ft.Container(expand=True),
                 ft.Row([
+                    img_alerta,
                     ft.Column([
                         ft.Text(user_rol.upper(), size=10, weight="bold", color="#8E8E8E"),
                         ft.Text(primer_nombre, size=13, weight="w600", color="white"),
