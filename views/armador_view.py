@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import flet as ft
 from views.kanban_view import KanbanView
 from views.ajustes_view import AjustesView
@@ -50,9 +51,9 @@ def armador_view(page: ft.Page, callback_logout):
                 ft.Container(expand=True),
                 ft.Row([
                     ft.Column([
-                        ft.Text(user_rol.upper(), size=10, weight="bold", color=c_naranja),
-                        ft.Text(primer_nombre, size=13, weight="w500", color="white"),
-                    ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.END),
+                        ft.Text(user_rol.upper(), size=10, weight="bold", color="#8E8E8E"),
+                        ft.Text(primer_nombre, size=13, weight="w600", color="white"),
+                    ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.END, alignment=ft.MainAxisAlignment.CENTER),
                     ft.Container(
                         content=top_bar_foto,
                         width=36, height=36,
@@ -61,13 +62,13 @@ def armador_view(page: ft.Page, callback_logout):
                         border=ft.Border.all(2, c_naranja),
                     ),
                 ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-            ])
+            ], vertical_alignment=ft.CrossAxisAlignment.CENTER)
         )
 
     def create_sidebar():
         items = [
             ("Home.png", "Tablero Kanban", "kanban"),
-            ("Perfil.png", "Ajustes", "ajustes"),
+            ("Ajustes.png", "Ajustes de Perfil", "ajustes"),
         ]
         
         buttons = [
