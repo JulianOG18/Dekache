@@ -42,9 +42,11 @@ class MenuViewAdmin(ft.Container):
     def __init__(self, products_data=None):
         super().__init__()
         self.products_data = products_data if products_data else []
+        self.PAGE_SIZE = 5
+        self.current_page = 0  # índice de página basado en 0
         
         self.bgcolor = CLR_BLANCO_HUESO
-        self.padding = ft.padding.only(left=25, top=25, right=25, bottom=40)
+        self.padding = ft.Padding.only(left=25, top=25, right=25, bottom=40)
 
         self.selected_product = self.products_data[0] if self.products_data else None
 
@@ -77,7 +79,7 @@ class MenuViewAdmin(ft.Container):
                             ft.Text("ADMINISTRACIÓN DE MENÚ", color=CLR_NARANJA, weight=ft.FontWeight.BOLD, size=11),
                             ft.Text("Gestión de Receta y Menú", size=32, weight=ft.FontWeight.BOLD, color=CLR_TEXTO)
                         ], spacing=2),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Nuevo Producto",
                             bgcolor=CLR_NARANJA,
                             color=CLR_BLANCO,
@@ -129,6 +131,7 @@ class MenuViewAdmin(ft.Container):
                 ft.dropdown.Option("Hamburguesas"),
                 ft.dropdown.Option("Hot Dogs"),
                 ft.dropdown.Option("Salchipapas"),
+                ft.dropdown.Option("Gaseosas"),
                 ft.dropdown.Option("Más productos"),
             ]
         )
@@ -237,7 +240,7 @@ class MenuViewAdmin(ft.Container):
             shape=ft.RoundedRectangleBorder(radius=20),
             content=ft.Container(
                 width=450,
-                padding=ft.padding.all(10),
+                padding=ft.Padding.all(10),
                 content=ft.Column([
                     ft.Row([
                         ft.Container(width=5, height=35, bgcolor=CLR_NARANJA, border_radius=3),
@@ -294,7 +297,7 @@ class MenuViewAdmin(ft.Container):
                             on_click=close_dialog,
                             style=ft.ButtonStyle(color=CLR_GRIS_MEDIO)
                         ),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Guardar Producto",
                             on_click=save_product,
                             bgcolor=CLR_NARANJA,
@@ -344,6 +347,7 @@ class MenuViewAdmin(ft.Container):
                 ft.dropdown.Option("Hamburguesas"),
                 ft.dropdown.Option("Hot Dogs"),
                 ft.dropdown.Option("Salchipapas"),
+                ft.dropdown.Option("Gaseosas"),
                 ft.dropdown.Option("Más productos"),
             ],
             value=p.get("categoria", "")
@@ -477,7 +481,7 @@ class MenuViewAdmin(ft.Container):
             shape=ft.RoundedRectangleBorder(radius=20),
             content=ft.Container(
                 width=450,
-                padding=ft.padding.all(10),
+                padding=ft.Padding.all(10),
                 content=ft.Column([
                     ft.Row([
                         ft.Container(width=5, height=35, bgcolor=CLR_NARANJA, border_radius=3),
@@ -534,7 +538,7 @@ class MenuViewAdmin(ft.Container):
                             on_click=close_dialog,
                             style=ft.ButtonStyle(color=CLR_GRIS_MEDIO)
                         ),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Actualizar Producto",
                             on_click=save_edit,
                             bgcolor=CLR_NARANJA,
@@ -593,7 +597,7 @@ class MenuViewAdmin(ft.Container):
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=close_dialog, style=ft.ButtonStyle(color=CLR_TEXTO_SEC)),
-                ft.ElevatedButton(
+                ft.Button(
                     "Eliminar",
                     bgcolor="red",
                     color=CLR_BLANCO,
@@ -676,7 +680,7 @@ class MenuViewAdmin(ft.Container):
                                         content=ft.Text(f"{ing.get('cantidad')}", color=CLR_NEGRO, size=12, weight="bold"),
                                         bgcolor=CLR_AMARILLO,
                                         border_radius=5,
-                                        padding=ft.padding.symmetric(horizontal=8, vertical=3),
+                                        padding=ft.Padding.symmetric(horizontal=8, vertical=3),
                                     ),
                                     ft.Text(ing.get('insumo', ''), color=CLR_BLANCO, size=13),
                                 ], spacing=10, expand=True),
@@ -685,11 +689,11 @@ class MenuViewAdmin(ft.Container):
                                     content=ft.Text("✕", color="#FF4444", size=14, weight="bold"),
                                     ink=True,
                                     on_click=create_remove_handler(idx),
-                                    padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                                    padding=ft.Padding.symmetric(horizontal=6, vertical=2),
                                     border_radius=4,
                                 )
                             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                            padding=ft.padding.symmetric(vertical=8, horizontal=12),
+                            padding=ft.Padding.symmetric(vertical=8, horizontal=12),
                             border=ft.Border(bottom=ft.BorderSide(1, "#252525")),
                         )
                     )
@@ -793,7 +797,7 @@ class MenuViewAdmin(ft.Container):
                     ft.Row([
                         insumo_dd,
                         cantidad_tf,
-                        ft.ElevatedButton(
+                        ft.Button(
                             "✚ Agregar",
                             bgcolor=CLR_NARANJA,
                             color=CLR_BLANCO,
@@ -810,7 +814,7 @@ class MenuViewAdmin(ft.Container):
                             content=ft.Text(f"{len(ingredientes_actuales)} items", color=CLR_NARANJA, size=11, weight="bold"),
                             bgcolor="#1A1A1A",
                             border_radius=10,
-                            padding=ft.padding.symmetric(horizontal=10, vertical=3),
+                            padding=ft.Padding.symmetric(horizontal=10, vertical=3),
                         )
                     ], alignment="spaceBetween"),
                     ft.Container(height=6),
@@ -833,7 +837,7 @@ class MenuViewAdmin(ft.Container):
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=cerrar_dialogo, style=ft.ButtonStyle(color=CLR_GRIS_MEDIO)),
-                ft.ElevatedButton(
+                ft.Button(
                     "Guardar Receta",
                     on_click=guardar_receta,
                     bgcolor=CLR_NARANJA,
@@ -860,12 +864,35 @@ class MenuViewAdmin(ft.Container):
         self.table_panel.content = self.build_table_content()
         self.update()
 
+    def ir_pagina_anterior(self, e):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.table_panel.content = self.build_table_content()
+            self.update()
+
+    def ir_pagina_siguiente(self, e):
+        total_pages = max(1, -(-len(self.products_data) // self.PAGE_SIZE))  # ceil division
+        if self.current_page < total_pages - 1:
+            self.current_page += 1
+            self.table_panel.content = self.build_table_content()
+            self.update()
+
     # ═══════════════════════════════════════════
     #  TABLA DE PRODUCTOS
     # ═══════════════════════════════════════════
     def build_table_content(self):
+        total = len(self.products_data)
+        total_pages = max(1, -(-total // self.PAGE_SIZE))  # ceil division
+        # Clamp current_page en caso de que los datos cambien
+        if self.current_page >= total_pages:
+            self.current_page = max(0, total_pages - 1)
+
+        start = self.current_page * self.PAGE_SIZE
+        end = start + self.PAGE_SIZE
+        page_products = self.products_data[start:end]
+
         rows = []
-        for p in self.products_data:
+        for p in page_products:
             costo_prod = sum(item.get("costo", 0) for item in p.get("receta", []))
             stock = p.get("stock_actual", 0)
             
@@ -931,6 +958,48 @@ class MenuViewAdmin(ft.Container):
                 ]
             ))
 
+        # ── Footer de paginación ──
+        mostrando_inicio = start + 1 if total > 0 else 0
+        mostrando_fin = min(end, total)
+        puede_anterior = self.current_page > 0
+        puede_siguiente = self.current_page < total_pages - 1
+
+        paginacion_footer = ft.Container(
+            padding=ft.Padding.only(top=16),
+            border=ft.Border(top=ft.BorderSide(1, CLR_BORDE)),
+            content=ft.Row([
+                ft.Text(
+                    f"Mostrando {mostrando_inicio}–{mostrando_fin} de {total} productos",
+                    size=12,
+                    color=CLR_TEXTO_SEC,
+                ),
+                ft.Row([
+                    ft.Container(
+                        content=ft.Image(src="anterior.png", width=22, height=22,
+                                         opacity=1.0 if puede_anterior else 0.3),
+                        ink=puede_anterior,
+                        border_radius=6,
+                        on_click=self.ir_pagina_anterior if puede_anterior else None,
+                        tooltip="Página anterior",
+                    ),
+                    ft.Text(
+                        f"{self.current_page + 1} / {total_pages}",
+                        size=12,
+                        color=CLR_TEXTO,
+                        weight="bold",
+                    ),
+                    ft.Container(
+                        content=ft.Image(src="siguiente.png", width=22, height=22,
+                                         opacity=1.0 if puede_siguiente else 0.3),
+                        ink=puede_siguiente,
+                        border_radius=6,
+                        on_click=self.ir_pagina_siguiente if puede_siguiente else None,
+                        tooltip="Página siguiente",
+                    ),
+                ], spacing=12, alignment=ft.MainAxisAlignment.END),
+            ], alignment="spaceBetween", vertical_alignment=ft.CrossAxisAlignment.CENTER)
+        )
+
         return ft.Column([
             ft.Text("Catálogo de Productos", size=22, weight="bold", color=CLR_TEXTO),
             ft.DataTable(
@@ -948,7 +1017,8 @@ class MenuViewAdmin(ft.Container):
                     ft.DataColumn(ft.Text("ACCIONES", size=11, color=CLR_NARANJA, weight="bold")),
                 ],
                 rows=rows,
-            )
+            ),
+            paginacion_footer,
         ])
 
     # ═══════════════════════════════════════════
@@ -983,7 +1053,7 @@ class MenuViewAdmin(ft.Container):
                             ft.Text(format_cop(item.get("costo", 0)), color=CLR_NARANJA, weight="bold")
                         ], horizontal_alignment="end", spacing=0)
                     ], alignment="spaceBetween"),
-                    padding=ft.padding.symmetric(vertical=10),
+                    padding=ft.Padding.symmetric(vertical=10),
                     border=ft.Border(bottom=ft.BorderSide(0.5, "#22FFFFFF"))
                 )
             )
@@ -1012,7 +1082,7 @@ class MenuViewAdmin(ft.Container):
                     )
                 ], alignment="spaceBetween"),
                 ft.Container(height=10),
-                ft.ElevatedButton(
+                ft.Button(
                     "Editar Receta",
                     bgcolor=CLR_NARANJA,
                     color=CLR_BLANCO,
