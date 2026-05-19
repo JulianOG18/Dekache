@@ -131,6 +131,7 @@ class MenuViewAdmin(ft.Container):
                 ft.dropdown.Option("Hamburguesas"),
                 ft.dropdown.Option("Hot Dogs"),
                 ft.dropdown.Option("Salchipapas"),
+                ft.dropdown.Option("Gaseosas"),
                 ft.dropdown.Option("Más productos"),
             ]
         )
@@ -346,6 +347,7 @@ class MenuViewAdmin(ft.Container):
                 ft.dropdown.Option("Hamburguesas"),
                 ft.dropdown.Option("Hot Dogs"),
                 ft.dropdown.Option("Salchipapas"),
+                ft.dropdown.Option("Gaseosas"),
                 ft.dropdown.Option("Más productos"),
             ],
             value=p.get("categoria", "")

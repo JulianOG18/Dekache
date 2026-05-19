@@ -33,6 +33,9 @@ class PedidosView(ft.Container):
         self.padding = ft.Padding.all(30)
         
         # Estado
+        from database import get_estado_turno_actual
+        self.turno = get_estado_turno_actual()
+        self.turno_abierto = self.turno is not None and self.turno['estado'] == 'Abierto'
         self.productos = get_products_with_recipes()
         self.productos_filtrados = self.productos.copy()
         self.ticket_items = []
@@ -156,12 +159,13 @@ class PedidosView(ft.Container):
                 # Botones
                 ft.Button(
                     "ENVIAR A COCINA / CONFIRMAR",
-                    bgcolor=CLR_NARANJA,
+                    bgcolor=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO,
                     color=CLR_BLANCO,
                     width=330,
                     height=50,
                     style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-                    on_click=self.confirmar_venta
+                    on_click=self.confirmar_venta if self.turno_abierto else None,
+                    disabled=not self.turno_abierto
                 ),
                 ft.Container(height=5),
                 ft.Button(
@@ -256,12 +260,12 @@ class PedidosView(ft.Container):
                         ft.Text(format_cop(p.get("precio_venta", 0)), color=CLR_NARANJA, weight="bold", size=16),
                         ft.Container(
                             content=ft.Text("+", color=CLR_BLANCO, size=20, weight="bold"),
-                            bgcolor=CLR_NARANJA,
+                            bgcolor=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO,
                             width=30, height=30,
                             border_radius=8,
                             alignment=ft.Alignment(0, 0),
-                            ink=True,
-                            on_click=lambda e, prod=p: self.agregar_al_ticket(prod)
+                            ink=self.turno_abierto,
+                            on_click=(lambda e, prod=p: self.agregar_al_ticket(prod)) if self.turno_abierto else None
                         )
                     ], alignment="spaceBetween")
                 ], spacing=0)
@@ -269,6 +273,11 @@ class PedidosView(ft.Container):
             self.grid_productos.controls.append(card)
 
     def agregar_al_ticket(self, producto):
+        from database import get_estado_turno_actual
+        turno = get_estado_turno_actual()
+        if not turno or turno['estado'] == 'Cerrado':
+            show_snackbar(self.main_page, "Error: La caja está Cerrada. No se pueden agregar productos.", "red")
+            return
         # Buscar si ya existe
         for item in self.ticket_items:
             if item['id_producto'] == producto['id']:
@@ -385,6 +394,11 @@ class PedidosView(ft.Container):
         self.txt_total.value = format_cop(total)
 
     def confirmar_venta(self, e):
+        from database import get_estado_turno_actual
+        turno = get_estado_turno_actual()
+        if not turno or turno['estado'] == 'Cerrado':
+            show_snackbar(self.main_page, "Error: La caja está Cerrada. No se pueden registrar ventas.", "red")
+            return
         if not self.ticket_items:
             show_snackbar(self.main_page, "El ticket está vacío. Agrega productos.", "red")
             return

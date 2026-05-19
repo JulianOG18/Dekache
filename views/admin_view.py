@@ -9,6 +9,7 @@ from views.pedidos_view import PedidosView
 from views.ajustes_view import AjustesView
 from views.inventario_view import InventarioView
 from views.suministros_view import SuministrosView
+from views.reportes_view import ReportesView
 
 
 
@@ -239,6 +240,17 @@ def admin_view(page: ft.Page, callback_logout):
         return MenuViewAdmin(products_data=datos_frescos)
 
     def show_view(view_name):
+        from database import get_estado_turno_actual
+        t = get_estado_turno_actual()
+        # Admin puede acceder a todo excepto pedidos/editar/suministros si la caja está cerrada
+        vistas_libres_admin = ("reportes", "ajustes", "kanban", "menu", "users", "inventario")
+        if (not t or t['estado'] == 'Cerrado') and view_name not in vistas_libres_admin:
+            snack = ft.SnackBar(ft.Text("Debe abrir la caja primero para realizar ventas o gestionar suministros.", color="white"), bgcolor="red")
+            page.overlay.append(snack)
+            snack.open = True
+            page.update()
+            return
+
         content_scroll_column.controls.clear()
         if view_name == "kanban":
             target = KanbanView(page)
@@ -256,6 +268,8 @@ def admin_view(page: ft.Page, callback_logout):
             target = InventarioView(page, user_correo)
         elif view_name == "suministros":
             target = SuministrosView(page, user_correo)
+        elif view_name == "reportes":
+            target = ReportesView(page, user_correo, is_admin=True, on_apertura_success=lambda: show_view("kanban"))
         
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
@@ -334,6 +348,7 @@ def admin_view(page: ft.Page, callback_logout):
             ("Menu.png",    "Menú",             "menu"),
             ("Inventario.png", "Inventario",    "inventario"),
             ("TabletS.png", "Control de Insumos", "suministros"),
+            ("ActividadReciente.png", "Reportes", "reportes"),
             ("Ajustes.png",  "Ajustes de Perfil",          "ajustes"),
         ]
         buttons = []
@@ -405,7 +420,7 @@ def admin_view(page: ft.Page, callback_logout):
             ], spacing=5, expand=True)
         )
 
-    # Iniciar la vista
+    # Iniciar la vista — admin siempre entra a kanban
     show_view("kanban")
     page.controls.clear()
     page.add(

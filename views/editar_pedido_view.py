@@ -45,6 +45,11 @@ class EditarPedidoView(ft.Container):
         self.items_originales = []
         self.items_editados = []
         
+        # Estado
+        from database import get_estado_turno_actual
+        self.turno = get_estado_turno_actual()
+        self.turno_abierto = self.turno is not None and self.turno['estado'] == 'Abierto'
+        
         self.todos_productos = get_products_with_recipes()
         
         # Referencias UI
@@ -316,9 +321,9 @@ class EditarPedidoView(ft.Container):
             col_cantidad = ft.Container(
                 width=100,
                 content=ft.Row([
-                    ft.Container(content=ft.Text("-", color=CLR_BLANCO, weight="bold"), bgcolor=CLR_NARANJA, width=24, height=24, border_radius=4, alignment=ft.Alignment(0,0), ink=True, on_click=lambda e, idx=i: self.cambiar_cantidad(idx, -1)),
+                    ft.Container(content=ft.Text("-", color=CLR_BLANCO, weight="bold"), bgcolor=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO, width=24, height=24, border_radius=4, alignment=ft.Alignment(0,0), ink=self.turno_abierto, on_click=(lambda e, idx=i: self.cambiar_cantidad(idx, -1)) if self.turno_abierto else None),
                     ft.Text(f"{item['cantidad']}x", weight="bold", size=14),
-                    ft.Container(content=ft.Text("+", color=CLR_BLANCO, weight="bold"), bgcolor=CLR_NARANJA, width=24, height=24, border_radius=4, alignment=ft.Alignment(0,0), ink=True, on_click=lambda e, idx=i: self.cambiar_cantidad(idx, 1)),
+                    ft.Container(content=ft.Text("+", color=CLR_BLANCO, weight="bold"), bgcolor=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO, width=24, height=24, border_radius=4, alignment=ft.Alignment(0,0), ink=self.turno_abierto, on_click=(lambda e, idx=i: self.cambiar_cantidad(idx, 1)) if self.turno_abierto else None),
                 ], spacing=8)
             )
             
@@ -356,7 +361,8 @@ class EditarPedidoView(ft.Container):
             dd_mods = ft.Dropdown(
                 hint_text="+ Mod", width=130, height=35, text_size=11, content_padding=5, border_color="#E0E0E0",
                 options=[ft.dropdown.Option(opt) for opt in opciones_mods],
-                on_select=lambda e, idx=i: self.agregar_modificacion(idx, e.control.value)
+                on_select=(lambda e, idx=i: self.agregar_modificacion(idx, e.control.value)) if self.turno_abierto else None,
+                disabled=not self.turno_abierto
             )
             
             col_mods = ft.Container(
@@ -371,7 +377,7 @@ class EditarPedidoView(ft.Container):
                 width=60, alignment=ft.Alignment(1, 0),
                 content=ft.Container(
                     content=ft.Image(src="borrar.png", width=20, height=20),
-                    ink=True, on_click=lambda e, idx=i: self.eliminar_item(idx),
+                    ink=self.turno_abierto, on_click=(lambda e, idx=i: self.eliminar_item(idx)) if self.turno_abierto else None,
                     padding=10, border_radius=5
                 )
             )
@@ -393,11 +399,11 @@ class EditarPedidoView(ft.Container):
         # Botón agregar producto
         btn_agregar = ft.Container(
             content=ft.Row([
-                ft.Icon(ft.icons.ADD_CIRCLE_OUTLINE if hasattr(ft.icons, "ADD_CIRCLE_OUTLINE") else None, color=CLR_NARANJA, size=20),
-                ft.Text("Agregar Producto", color=CLR_NARANJA, weight="bold")
+                ft.Icon(ft.icons.ADD_CIRCLE_OUTLINE if hasattr(ft.icons, "ADD_CIRCLE_OUTLINE") else None, color=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO, size=20),
+                ft.Text("Agregar Producto", color=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO, weight="bold")
             ]),
             padding=ft.Padding.symmetric(vertical=10),
-            ink=True, on_click=self.abrir_modal_productos
+            ink=self.turno_abierto, on_click=self.abrir_modal_productos if self.turno_abierto else None
         )
 
         # Footer con totales y botones
@@ -414,9 +420,9 @@ class EditarPedidoView(ft.Container):
                 ], spacing=10)
             ]),
             ft.Row([
-                ft.Button("CANCELAR PEDIDO", bgcolor="#E53935", color=CLR_BLANCO, height=45, on_click=self.abrir_dialogo_cancelar),
+                ft.Button("CANCELAR PEDIDO", bgcolor="#E53935" if self.turno_abierto else CLR_GRIS_MEDIO, color=CLR_BLANCO, height=45, on_click=self.abrir_dialogo_cancelar if self.turno_abierto else None, disabled=not self.turno_abierto),
                 ft.Button("CANCELAR CAMBIOS", bgcolor=CLR_GRIS_CLARO, color=CLR_TEXTO_SEC, height=45, on_click=self.cancelar_cambios),
-                ft.Button("ACTUALIZAR PEDIDO Y NOTIFICAR A COCINA", bgcolor=CLR_NARANJA, color=CLR_BLANCO, height=45, on_click=self.confirmar_cambios)
+                ft.Button("ACTUALIZAR PEDIDO Y NOTIFICAR A COCINA", bgcolor=CLR_NARANJA if self.turno_abierto else CLR_GRIS_MEDIO, color=CLR_BLANCO, height=45, on_click=self.confirmar_cambios if self.turno_abierto else None, disabled=not self.turno_abierto)
             ], spacing=15)
         ], alignment="spaceBetween", vertical_alignment="end")
 

@@ -5,6 +5,7 @@ from views.kanban_view import KanbanView
 from views.editar_pedido_view import EditarPedidoView
 from views.ajustes_view import AjustesView
 from views.inventario_view import InventarioView
+from views.reportes_view import ReportesView
 from database import check_critical_stock
 
 def cajero_view(page: ft.Page, callback_logout):
@@ -32,18 +33,24 @@ def cajero_view(page: ft.Page, callback_logout):
     content_area = ft.Container(content=content_scroll_column, expand=True, alignment=ft.Alignment(-1, -1))
 
     def show_view(view_name):
-        content_scroll_column.controls.clear()
-        if view_name == "kanban":
-            target = KanbanView(page)
-        elif view_name == "pedidos":
-            target = PedidosView(page)
-        elif view_name == "editar":
-            target = EditarPedidoView(page)
-        elif view_name == "ajustes":
-            target = AjustesView(page, user_correo)
-        elif view_name == "inventario":
-            target = InventarioView(page, user_correo)
+        from database import get_estado_turno_actual
+        t = get_estado_turno_actual()
+        if (not t or t['estado'] == 'Cerrado') and view_name != "ajustes":
+            target = ReportesView(page, user_correo, is_admin=False, on_apertura_success=lambda: show_view("kanban"))
+        else:
+            content_scroll_column.controls.clear()
+            if view_name == "kanban":
+                target = KanbanView(page)
+            elif view_name == "pedidos":
+                target = PedidosView(page)
+            elif view_name == "editar":
+                target = EditarPedidoView(page)
+            elif view_name == "ajustes":
+                target = AjustesView(page, user_correo)
+            elif view_name == "inventario":
+                target = InventarioView(page, user_correo)
 
+        content_scroll_column.controls.clear()
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
         )

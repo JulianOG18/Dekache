@@ -62,11 +62,36 @@ class InventarioView(ft.Container):
         self.construir_ui()
         self.cargar_datos()
 
-    def ejecutar_reordenar(self, e):
-        if reordenar_todos_insumos():
+    def ejecutar_actualizacion(self, e):
+        # 1. Guardar el estado actual del TOP 5 antes de cargar nuevos datos
+        estado_previo = getattr(self, 'ultimo_top5_estado', [])
+        
+        # 2. Cargar nuevos datos desde la base de datos
+        self.cargar_datos()
+        
+        # 3. Obtener el nuevo estado del TOP 5
+        estado_nuevo = getattr(self, 'ultimo_top5_estado', [])
+        
+        # 4. Comparar los estados
+        if estado_previo != estado_nuevo:
+            # Hubo cambios
             self.main_page.pubsub.send_all("inventory_update")
             try:
-                self.main_page.snack_bar = ft.SnackBar(ft.Text("¡Se han reordenado todos los insumos al 100%!"), bgcolor=CLR_VERDE)
+                self.main_page.snack_bar = ft.SnackBar(
+                    ft.Text("🔄 ¡El TOP 5 de insumos críticos se ha actualizado con cambios!"), 
+                    bgcolor=CLR_VERDE
+                )
+                self.main_page.snack_bar.open = True
+                self.main_page.update()
+            except:
+                pass
+        else:
+            # Todo sigue igual
+            try:
+                self.main_page.snack_bar = ft.SnackBar(
+                    ft.Text("✅ No hay cambios en el TOP 5 de insumos críticos."), 
+                    bgcolor=CLR_NARANJA
+                )
                 self.main_page.snack_bar.open = True
                 self.main_page.update()
             except:
@@ -192,6 +217,9 @@ class InventarioView(ft.Container):
             
         # Top 5 insumos por agotarse (< 50%)
         insumos_ordenados = sorted([i for i in insumos_porcentaje if i['porcentaje'] < 50], key=lambda x: x['porcentaje'])[:5]
+        
+        # Guardar estado para comparaciones
+        self.ultimo_top5_estado = [(i.get('id_insumo'), float(i.get('stock_actual', 0))) for i in insumos_ordenados]
         
         if not insumos_ordenados:
             self.col_criticos.controls.append(ft.Text("No hay insumos críticos actualmente.", color=CLR_VERDE, weight="bold"))
@@ -334,8 +362,8 @@ class InventarioView(ft.Container):
                     ], spacing=1),
                     ft.Container(
                         bgcolor=CLR_NARANJA, padding=ft.Padding.symmetric(horizontal=12, vertical=6), border_radius=6,
-                        content=ft.Text("Reordenar Todo", size=11, weight="bold", color=CLR_BLANCO),
-                        on_click=self.ejecutar_reordenar, ink=True
+                        content=ft.Text("Actualizar", size=11, weight="bold", color=CLR_BLANCO),
+                        on_click=self.ejecutar_actualizacion, ink=True
                     )
                 ], alignment="spaceBetween"),
                 ft.Container(height=10),
