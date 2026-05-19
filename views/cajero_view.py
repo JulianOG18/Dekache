@@ -4,6 +4,7 @@ from views.pedidos_view import PedidosView
 from views.kanban_view import KanbanView
 from views.editar_pedido_view import EditarPedidoView
 from views.ajustes_view import AjustesView
+from views.inventario_view import InventarioView
 from database import check_critical_stock
 
 def cajero_view(page: ft.Page, callback_logout):
@@ -40,6 +41,8 @@ def cajero_view(page: ft.Page, callback_logout):
             target = EditarPedidoView(page)
         elif view_name == "ajustes":
             target = AjustesView(page, user_correo)
+        elif view_name == "inventario":
+            target = InventarioView(page, user_correo)
 
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
@@ -102,6 +105,7 @@ def cajero_view(page: ft.Page, callback_logout):
             ("Home.png",    "Tablero Kanban", "kanban"), 
             ("Pedidos.png", "Pedidos",         "pedidos"),
             ("EditarPedido.png",  "Editar Pedido",   "editar"),
+            ("Inventario.png", "Inventario",    "inventario"),
             ("Ajustes.png",  "Ajustes de Perfil",         "ajustes"),
         ]
         

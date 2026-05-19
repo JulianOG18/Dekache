@@ -8,6 +8,7 @@ from views.editar_pedido_view import EditarPedidoView
 from views.pedidos_view import PedidosView
 from views.ajustes_view import AjustesView
 from views.inventario_view import InventarioView
+from views.suministros_view import SuministrosView
 
 
 
@@ -253,6 +254,8 @@ def admin_view(page: ft.Page, callback_logout):
             target = AjustesView(page, user_correo)
         elif view_name == "inventario":
             target = InventarioView(page, user_correo)
+        elif view_name == "suministros":
+            target = SuministrosView(page, user_correo)
         
         content_scroll_column.controls.append(
             ft.Container(padding=10, content=target, alignment=ft.Alignment(-1, -1), expand=True)
@@ -260,20 +263,30 @@ def admin_view(page: ft.Page, callback_logout):
         top_bar_foto.src = getattr(page, "user_foto", "Perfil.png")
         page.update()
 
-    # Alerta Global de Inventario (HU-07)
-    # Se utiliza ft.Image para evitar problemas de compatibilidad con iconos Flet antiguos
-    # NOTA: El usuario puede colocar una imagen "AlertaStock.png" personalizada en assets/
-    img_alerta = ft.Image(
-        src="AlertaStock.png", 
-        width=22, 
-        height=22, 
-        tooltip="¡Insumos en estado crítico!", 
-        visible=db.check_critical_stock()
+    # Alerta Global de Inventario (HU-08)
+    burbuja_alerta = ft.Container(
+        content=ft.Text("", size=12, weight="bold", color="white"),
+        bgcolor="#FF4444",
+        width=24, height=24,
+        border_radius=12,
+        alignment=ft.Alignment(0,0),
+        visible=False
     )
+    
+    def actualizar_burbuja():
+        count = db.get_critical_stock_count()
+        if count > 0:
+            burbuja_alerta.content.value = str(count)
+            burbuja_alerta.tooltip = f"¡{count} insumos críticos!"
+            burbuja_alerta.visible = True
+        else:
+            burbuja_alerta.visible = False
+            
+    actualizar_burbuja()
 
     def on_inventory_pubsub(message):
         if message in ("inventory_update", "update_kanban"):
-            img_alerta.visible = db.check_critical_stock()
+            actualizar_burbuja()
             try:
                 page.update()
             except:
@@ -296,7 +309,7 @@ def admin_view(page: ft.Page, callback_logout):
                 ], spacing=6),
                 ft.Container(expand=True),
                 ft.Row([
-                    img_alerta,
+                    burbuja_alerta,
                     ft.Column([
                         ft.Text(user_rol.upper(), size=10, weight="bold", color="#8E8E8E"),
                         ft.Text(primer_nombre, size=13, weight="w600", color="white"),
@@ -320,10 +333,14 @@ def admin_view(page: ft.Page, callback_logout):
             ("Users.png",   "Crear Usuarios",   "users"), 
             ("Menu.png",    "Menú",             "menu"),
             ("Inventario.png", "Inventario",    "inventario"),
+            ("TabletS.png", "Control de Insumos", "suministros"),
             ("Ajustes.png",  "Ajustes de Perfil",          "ajustes"),
         ]
         buttons = []
+        is_admin = str(user_rol).lower() == "admin"
         for icon, label, vid in items:
+            if vid == "suministros" and not is_admin:
+                continue
             buttons.append(
                 ft.Container(
                     padding=ft.Padding.symmetric(vertical=12, horizontal=20),
@@ -368,7 +385,6 @@ def admin_view(page: ft.Page, callback_logout):
                     ft.Container(height=20),
                     ft.Container(
                         content=ft.Row([
-                            ft.Image(src="Inventario.png", width=14, height=14),
                             ft.Text("SYSTEM CONTROL", size=11, weight="bold", color="#777777")
                         ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                         padding=ft.Padding.only(left=20, bottom=10)

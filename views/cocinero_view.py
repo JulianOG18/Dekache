@@ -2,6 +2,7 @@
 import flet as ft
 from views.kanban_view import KanbanView
 from views.ajustes_view import AjustesView
+from views.inventario_view import InventarioView
 from database import check_critical_stock
 
 def cocinero_view(page: ft.Page, callback_logout):
@@ -30,6 +31,8 @@ def cocinero_view(page: ft.Page, callback_logout):
             target = KanbanView(page)
         elif view_name == "ajustes":
             target = AjustesView(page, user_correo)
+        elif view_name == "inventario":
+            target = InventarioView(page, user_correo)
         # Puedes añadir más vistas específicas de cocina aquí
         
         content_scroll_column.controls.append(
@@ -90,6 +93,7 @@ def cocinero_view(page: ft.Page, callback_logout):
     def create_sidebar():
         items = [
             ("Home.png", "Tablero Kanban", "kanban"),
+            ("Inventario.png", "Inventario", "inventario"),
             ("Ajustes.png", "Ajustes de Perfil", "ajustes"),
         ]
         
